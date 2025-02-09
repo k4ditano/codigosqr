@@ -59,16 +59,29 @@ class NegociosController {
                 [nombre, email, usuario, hashedPassword]
             );
 
+            // Enviar email con las credenciales
+            try {
+                await emailService.sendBusinessCredentials(email, {
+                    nombre,
+                    usuario,
+                    password,
+                    email
+                });
+                console.log('Email de credenciales enviado a:', email);
+            } catch (emailError) {
+                console.error('Error al enviar email:', emailError);
+                // No detenemos la creación si falla el email
+            }
+
             await client.query('COMMIT');
 
-            // Enviar respuesta con las credenciales
             res.status(201).json({
                 mensaje: 'Negocio creado exitosamente',
                 negocio: result.rows[0],
                 credenciales: {
                     usuario: usuario,
                     email: email,
-                    password: password // Contraseña sin hashear para mostrar al usuario
+                    password: password
                 }
             });
 
