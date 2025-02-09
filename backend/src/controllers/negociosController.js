@@ -124,29 +124,23 @@ class NegociosController {
     async listar(req, res) {
         const client = await this.pool.connect();
         try {
-            console.log('Listando negocios...');
             const result = await client.query(
                 `SELECT 
                     id, 
                     nombre, 
-                    email, 
-                    telefono, 
-                    estado, 
-                    usuario,
-                    role,
-                    COALESCE(created_at, CURRENT_TIMESTAMP) as created_at 
+                    email,
+                    estado,
+                    created_at
                 FROM negocios 
-                WHERE role != $1 
-                ORDER BY created_at DESC`,
-                ['admin']
+                ORDER BY created_at DESC`
             );
-            console.log('Negocios encontrados:', result.rows.length);
+            
             res.json(result.rows);
         } catch (error) {
             console.error('Error detallado al listar negocios:', error);
             res.status(500).json({ 
                 error: 'Error al listar los negocios',
-                detalle: error.message 
+                details: error.message 
             });
         } finally {
             client.release();
