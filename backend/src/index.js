@@ -35,8 +35,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/formularios', formRoutes);
 app.use('/api/facturacion', facturacionRoutes);
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+app.listen(process.env.PORT || 5000, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en puerto ${process.env.PORT || 5000}`);
 }); 
