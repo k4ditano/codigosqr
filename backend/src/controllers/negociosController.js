@@ -220,7 +220,7 @@ class NegociosController {
             if (!result.rows[0].codigo_qr) {
                 console.log('QR no encontrado, generando nuevo QR');
                 const baseUrl = process.env.BASE_URL || 'http://145.223.100.119';
-                const qrUrl = `${baseUrl}/negocio/${id}`;
+                const qrUrl = `${baseUrl}/formulario/${id}`;
                 const qrCode = await QRCode.toDataURL(qrUrl);
                 
                 console.log('QR generado, actualizando en base de datos');
