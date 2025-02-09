@@ -61,13 +61,12 @@ class NegociosController {
 
             // Enviar email con las credenciales
             try {
-                await emailService.sendBusinessCredentials(email, {
-                    nombre,
+                await emailService.sendBusinessCredentials(
+                    email,
                     usuario,
-                    password,
-                    email
-                });
-                console.log('Email de credenciales enviado a:', email);
+                    password
+                );
+                console.log('Email de credenciales enviado a:', email, 'con usuario:', usuario, 'y password:', password);
             } catch (emailError) {
                 console.error('Error al enviar email:', emailError);
                 // No detenemos la creación si falla el email

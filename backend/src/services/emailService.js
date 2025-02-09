@@ -61,22 +61,21 @@ class EmailService {
 
     async sendBusinessCredentials(email, usuario, password) {
         try {
-            const mailOptions = {
+            const info = await this.transporter.sendMail({
                 from: process.env.EMAIL_USER,
                 to: email,
-                subject: 'Credenciales de acceso a su cuenta de negocio',
+                subject: 'Credenciales de acceso a su negocio',
                 html: `
-                    <h1>Bienvenido a nuestro sistema</h1>
+                    <h1>Bienvenido al sistema</h1>
                     <p>Sus credenciales de acceso son:</p>
-                    <p><strong>Usuario:</strong> ${usuario}</p>
-                    <p><strong>Contraseña:</strong> ${password}</p>
+                    <ul>
+                        <li><strong>Usuario:</strong> ${usuario}</li>
+                        <li><strong>Contraseña:</strong> ${password}</li>
+                    </ul>
+                    <p>Acceda al sistema en: <a href="http://145.223.100.119">http://145.223.100.119</a></p>
                     <p>Por favor, cambie su contraseña después del primer inicio de sesión.</p>
-                    <p>Acceda al sistema en: ${process.env.FRONTEND_URL || 'http://localhost:3000'}</p>
                 `
-            };
-
-            const info = await this.transporter.sendMail(mailOptions);
-            console.log('Email enviado:', info.messageId);
+            });
             return info;
         } catch (error) {
             console.error('Error al enviar email:', error);
