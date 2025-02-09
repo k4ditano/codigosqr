@@ -19,24 +19,22 @@ class NegociosController {
         try {
             const { nombre, email, telefono } = req.body;
             
-            // Generar usuario y contraseña
-            const usuario = email.split('@')[0];
+            // Generar contraseña aleatoria
             const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await bcrypt.hash(password, 10);
 
             await client.query('BEGIN');
 
-            // Insertar el negocio
+            // Insertar el negocio con solo los campos que existen en la tabla
             const result = await client.query(
                 `INSERT INTO negocios (
                     nombre,
                     email,
-                    telefono,
                     password,
                     estado
-                ) VALUES ($1, $2, $3, $4, true)
+                ) VALUES ($1, $2, $3, true)
                 RETURNING *`,
-                [nombre, email, telefono, hashedPassword]
+                [nombre, email, hashedPassword]
             );
 
             await client.query('COMMIT');
