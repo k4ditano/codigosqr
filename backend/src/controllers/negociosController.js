@@ -2,7 +2,6 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 const qrService = require('../services/qrService');
-const pool = new Pool();
 
 class NegociosController {
     constructor() {
@@ -16,32 +15,66 @@ class NegociosController {
     }
 
     async crear(req, res) {
-        const client = await pool.connect();
+        const client = await this.pool.connect();
         try {
-            const { nombre, email, telefono, usuario, password } = req.body;
-            console.log('Creando negocio:', { nombre, email, telefono, usuario });
-
             await client.query('BEGIN');
+            
+            const { nombre, usuario, password, email, telefono } = req.body;
+            
+            // Verificar que todos los campos requeridos estén presentes
+            if (!nombre || !email || !telefono || !usuario || !password) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ 
+                    error: 'Todos los campos son requeridos' 
+                });
+            }
 
-            // Verificar si el usuario o email ya existen
+            console.log('Datos recibidos:', {
+                nombre,
+                usuario,
+                email,
+                telefono,
+                password: '****' // Por seguridad solo logueamos que existe
+            });
+
+            // Verificar si el usuario ya existe
             const userExists = await client.query(
-                'SELECT id FROM negocios WHERE usuario = $1 OR email = $2',
+                'SELECT id FROM usuarios WHERE usuario = $1 OR email = $2',
                 [usuario, email]
             );
 
             if (userExists.rows.length > 0) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({ 
-                    error: 'El usuario o email ya están registrados' 
-                });
+                const existingUser = userExists.rows[0];
+                const errorMessage = existingUser.email === email 
+                    ? 'El email ya está registrado' 
+                    : 'El nombre de usuario ya existe';
+                return res.status(400).json({ error: errorMessage });
             }
 
-            // Encriptar contraseña
+            // Hashear el password antes de guardarlo
             const hashedPassword = await bcrypt.hash(password, 10);
 
+            // Crear el usuario - Corregido el orden de los campos
+            const userResult = await client.query(
+                `INSERT INTO usuarios (
+                    nombre,
+                    usuario,
+                    password,
+                    email,
+                    role,
+                    estado
+                ) VALUES ($1, $2, $3, $4, 'business', true)
+                RETURNING id, usuario, nombre`,
+                [nombre, usuario, hashedPassword, email]
+            );
+
+            const { id: userId, usuario: userNombre } = userResult.rows[0];
+
             // Crear el negocio
-            const result = await client.query(
+            const negocioResult = await client.query(
                 `INSERT INTO negocios (
+                    id,
                     nombre,
                     email,
                     telefono,
@@ -49,30 +82,36 @@ class NegociosController {
                     password,
                     estado,
                     role
-                ) VALUES ($1, $2, $3, $4, $5, true, 'business')
-                RETURNING id, nombre, email, telefono, usuario, estado, role`,
-                [nombre, email, telefono, usuario, hashedPassword]
+                ) VALUES ($1, $2, $3, $4, $5, $6, true, 'business')
+                RETURNING *`,
+                [userId, nombre, email, telefono, usuario, hashedPassword]
             );
 
-            // Enviar email con credenciales
+            // Enviar email
             try {
                 await emailService.sendBusinessCredentials(email, usuario, password);
-                console.log('Email enviado a:', email);
+                console.log('Email de credenciales enviado exitosamente a:', email);
             } catch (emailError) {
-                console.error('Error al enviar email:', emailError);
-                // Continuamos aunque falle el email
+                console.error('Error detallado al enviar email:', emailError);
+                // No detenemos la creación del negocio, pero registramos el error
             }
 
             await client.query('COMMIT');
 
+            console.log('Negocio creado exitosamente:', negocioResult.rows[0]);
+
             res.status(201).json({
                 mensaje: 'Negocio creado exitosamente',
-                negocio: result.rows[0]
+                negocio: negocioResult.rows[0],
+                credenciales: {
+                    usuario: userNombre,
+                    id: userId
+                }
             });
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error al crear negocio:', error);
+            console.error('Error detallado al crear negocio:', error);
             res.status(500).json({ 
                 error: 'Error al crear el negocio',
                 details: error.message 
@@ -83,17 +122,31 @@ class NegociosController {
     }
 
     async listar(req, res) {
-        const client = await pool.connect();
+        const client = await this.pool.connect();
         try {
             console.log('Listando negocios...');
-            const result = await client.query('SELECT * FROM negocios ORDER BY created_at DESC');
+            const result = await client.query(
+                `SELECT 
+                    id, 
+                    nombre, 
+                    email, 
+                    telefono, 
+                    estado, 
+                    usuario,
+                    role,
+                    COALESCE(created_at, CURRENT_TIMESTAMP) as created_at 
+                FROM negocios 
+                WHERE role != $1 
+                ORDER BY created_at DESC`,
+                ['admin']
+            );
             console.log('Negocios encontrados:', result.rows.length);
             res.json(result.rows);
         } catch (error) {
-            console.error('Error al listar negocios:', error);
+            console.error('Error detallado al listar negocios:', error);
             res.status(500).json({ 
-                error: 'Error al obtener negocios',
-                details: error.message 
+                error: 'Error al listar los negocios',
+                detalle: error.message 
             });
         } finally {
             client.release();
@@ -332,22 +385,6 @@ class NegociosController {
             client.release();
         }
     }
-
-    async contarNegocios(req, res) {
-        const client = await pool.connect();
-        try {
-            const result = await client.query('SELECT COUNT(*) FROM negocios WHERE estado = true');
-            res.json({ count: parseInt(result.rows[0].count) });
-        } catch (error) {
-            console.error('Error al contar negocios:', error);
-            res.status(500).json({ 
-                error: 'Error al contar negocios',
-                details: error.message 
-            });
-        } finally {
-            client.release();
-        }
-    }
 }
 
-module.exports = new NegociosController(); 
+module.exports = NegociosController; 

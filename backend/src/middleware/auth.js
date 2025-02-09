@@ -5,15 +5,14 @@ const authMiddleware = (req, res, next) => {
         const token = req.header('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
-            return res.status(401).json({ error: 'No hay token' });
+            return res.status(401).json({ error: 'No hay token de autenticación' });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
-        console.error('Error de autenticación:', error);
-        res.status(401).json({ error: 'Token no válido' });
+        res.status(401).json({ error: 'Token inválido' });
     }
 };
 
@@ -31,8 +30,4 @@ const isBusiness = (req, res, next) => {
     next();
 };
 
-module.exports = {
-    auth: authMiddleware,
-    admin: adminMiddleware,
-    isBusiness
-}; 
+module.exports = { authMiddleware, adminMiddleware, isBusiness }; 
