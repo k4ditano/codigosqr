@@ -18,12 +18,12 @@ class QRService {
                 throw new Error('ID de negocio es requerido');
             }
             console.log('Generando QR para negocio:', businessId);
-            const formUrl = `${baseUrl}/form/${businessId}`;
+            const formUrl = `${baseUrl}/formulario/${businessId}`;
             console.log('URL del formulario:', formUrl);
             return await this.generateQR(formUrl);
         } catch (error) {
             console.error('Error al generar QR de negocio:', error);
-            throw new Error('Error al generar el código QR del negocio');
+            throw error;
         }
     }
 

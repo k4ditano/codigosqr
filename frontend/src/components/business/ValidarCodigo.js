@@ -12,7 +12,7 @@ import {
     DialogActions
 } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { QrReader } from 'react-qr-reader';
+import QrScanner from 'react-qr-scanner';
 import axiosClient from '../../config/axios';
 
 const ValidarCodigo = () => {
@@ -39,9 +39,9 @@ const ValidarCodigo = () => {
     };
 
     const handleScan = (data) => {
-        if (data) {
+        if (data?.text) {
             try {
-                const qrData = JSON.parse(data);
+                const qrData = JSON.parse(data.text);
                 if (qrData.type === 'discount' && qrData.code) {
                     setOpenScanner(false);
                     handleValidar(qrData.code);
@@ -113,11 +113,14 @@ const ValidarCodigo = () => {
             >
                 <DialogTitle>Escanear Código QR</DialogTitle>
                 <DialogContent>
-                    <QrReader
-                        onResult={handleScan}
+                    <QrScanner
+                        delay={300}
                         onError={handleError}
-                        constraints={{ facingMode: 'environment' }}
-                        style={{ width: '100%' }}
+                        onScan={handleScan}
+                        style={{ width: '100%', height: '100%' }}
+                        constraints={{
+                            video: { facingMode: "environment" }
+                        }}
                     />
                 </DialogContent>
                 <DialogActions>

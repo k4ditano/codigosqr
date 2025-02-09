@@ -11,7 +11,8 @@ import {
     Paper,
     Alert,
     TextField,
-    InputAdornment
+    InputAdornment,
+    Chip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../context/AuthContext';
@@ -51,13 +52,12 @@ const HistorialCanjes = () => {
     }, [filterCanjes]);
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString('es-ES', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        if (!dateString) return 'N/A';
+        return dateString; // Ya viene formateada desde el backend
+    };
+
+    const formatMoney = (amount) => {
+        return Number(amount || 0).toFixed(2) + '€';
     };
 
     return (
@@ -69,7 +69,7 @@ const HistorialCanjes = () => {
             <Box sx={{ mb: 3 }}>
                 <TextField
                     fullWidth
-                    placeholder="Buscar por código o email..."
+                    placeholder="Buscar por código..."
                     variant="outlined"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,23 +94,19 @@ const HistorialCanjes = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell>Código</TableCell>
-                            <TableCell>Email Cliente</TableCell>
                             <TableCell>Fecha de Canje</TableCell>
-                            <TableCell>Método</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {filteredCanjes.map((canje) => (
                             <TableRow key={canje.id}>
-                                <TableCell>{canje.codigo}</TableCell>
-                                <TableCell>{canje.cliente_email}</TableCell>
-                                <TableCell>{formatDate(canje.fecha_canje)}</TableCell>
-                                <TableCell>{canje.metodo_canje}</TableCell>
+                                <TableCell>{canje.codigo || 'N/A'}</TableCell>
+                                <TableCell>{canje.fecha_canje || 'N/A'}</TableCell>
                             </TableRow>
                         ))}
                         {filteredCanjes.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={2} align="center">
                                     No se encontraron canjes
                                 </TableCell>
                             </TableRow>

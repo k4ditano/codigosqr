@@ -1,21 +1,72 @@
 const express = require('express');
 const router = express.Router();
-const codigosController = require('../controllers/codigosController');
-const { auth, isAdmin, isBusiness } = require('../middleware/auth');
+const CodigosController = require('../controllers/codigosController');
+const { authMiddleware, adminMiddleware, isBusiness } = require('../middleware/auth');
 
-// Rutas para administrador
-router.post('/', auth, isAdmin, codigosController.crear);
-router.get('/', auth, isAdmin, codigosController.listar);
-router.get('/count', auth, isAdmin, codigosController.getCount);
+// Crear una instancia del controlador
+const codigosController = new CodigosController();
 
-// Ruta para ver canjes de un código específico
-router.get('/:id/canjes', auth, isAdmin, codigosController.obtenerCanjes);
+// Ruta de conteo - DEBE IR ANTES de las rutas con parámetros
+router.get('/count',
+    authMiddleware,
+    adminMiddleware,
+    (req, res) => codigosController.getCount(req, res)
+);
+
+// Rutas públicas (sin autenticación)
+router.get('/validar/:codigo', 
+    (req, res) => codigosController.validarPublico(req, res)
+);
 
 // Rutas para negocios
-router.post('/validar', auth, isBusiness, codigosController.validar);
-router.get('/canjes/negocio/:negocioId', auth, isBusiness, codigosController.obtenerCanjesPorNegocio);
+router.post('/validar', 
+    authMiddleware, 
+    isBusiness,
+    (req, res) => codigosController.validar(req, res)
+);
 
-// Ruta pública para validar código
-router.post('/validar-publico', codigosController.validarPublico);
+router.get('/canjes/negocio/:negocioId', 
+    authMiddleware, 
+    isBusiness,
+    (req, res) => codigosController.obtenerCanjesPorNegocio(req, res)
+);
+
+router.post('/', 
+    authMiddleware,
+    adminMiddleware,
+    (req, res) => codigosController.crear(req, res)
+);
+
+// Rutas para administradores
+router.get('/', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => codigosController.listar(req, res)
+);
+
+// Rutas específicas (deben ir al final para evitar conflictos con rutas anteriores)
+router.get('/:id/canjes', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => codigosController.obtenerCanjes(req, res)
+);
+
+router.get('/:id', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => codigosController.obtener(req, res)
+);
+
+router.put('/:id', 
+    authMiddleware, 
+    isBusiness,
+    (req, res) => codigosController.actualizar(req, res)
+);
+
+router.delete('/:id', 
+    authMiddleware, 
+    isBusiness,
+    (req, res) => codigosController.eliminar(req, res)
+);
 
 module.exports = router; 

@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Paper,
-    Typography,
     TextField,
     Button,
+    Typography,
+    Paper,
     Alert,
-    CircularProgress,
-    CheckCircleIcon
+    CircularProgress
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosClient from '../../config/axios';
 
 const FormularioCliente = () => {
     const { businessId } = useParams();
+    const navigate = useNavigate();
     const [negocio, setNegocio] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,51 +21,68 @@ const FormularioCliente = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
-        telefono: ''
+        telefono: '',
+        mensaje: ''
     });
 
-    const cargarNegocio = useCallback(async () => {
-        try {
-            const response = await axiosClient.get(`/negocios/${businessId}`);
-            setNegocio(response.data);
-            setLoading(false);
-        } catch (error) {
-            setError('Error al cargar la información del negocio');
-            setLoading(false);
-        }
-    }, [businessId]);
-
     useEffect(() => {
-        cargarNegocio();
-    }, [cargarNegocio]);
+        const cargarNegocio = async () => {
+            if (!businessId) {
+                setError('ID de negocio no proporcionado');
+                setLoading(false);
+                return;
+            }
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+            try {
+                console.log('Cargando negocio con ID:', businessId);
+                const response = await axiosClient.get(`/negocios/${businessId}/public`);
+                console.log('Respuesta del servidor:', response.data);
+                setNegocio(response.data);
+                setError('');
+            } catch (error) {
+                console.error('Error al cargar negocio:', error);
+                if (error.response?.status === 404) {
+                    setError('Negocio no encontrado');
+                } else if (error.response?.status === 400) {
+                    setError('ID de negocio inválido');
+                } else {
+                    setError('Error al cargar la información del negocio');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        cargarNegocio();
+    }, [businessId]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess(false);
-
         try {
-            await axiosClient.post('/formularios', {
+            setError('');
+            const response = await axiosClient.post('/formularios', {
                 ...formData,
                 negocio_id: businessId
             });
+            console.log('Formulario enviado:', response.data);
             setSuccess(true);
             setFormData({
                 nombre: '',
                 email: '',
-                telefono: ''
+                telefono: '',
+                mensaje: ''
             });
         } catch (error) {
-            setError('Error al enviar el formulario');
+            console.error('Error al enviar formulario:', error);
+            setError('Error al enviar el formulario. Por favor, intente nuevamente.');
         }
+    };
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
     };
 
     if (loading) {
@@ -76,49 +93,14 @@ const FormularioCliente = () => {
         );
     }
 
-    if (success) {
-        return (
-            <Box sx={{ 
-                minHeight: '100vh', 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: '#f5f5f5',
-                p: 2
-            }}>
-                <Paper sx={{ p: 4, maxWidth: 500, width: '100%', textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom color="primary">
-                        ¡Gracias por tu interés!
-                    </Typography>
-                    <Typography variant="body1" paragraph>
-                        Hemos recibido tu información correctamente. En breve nos pondremos en contacto contigo para ofrecerte nuestras mejores ofertas y descuentos.
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        El equipo de {negocio?.nombre}
-                    </Typography>
-                </Paper>
-            </Box>
-        );
-    }
-
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center',
-            pt: 4,
-            px: 2,
-            bgcolor: '#f5f5f5'
-        }}>
-            <Paper sx={{ p: 4, maxWidth: 500, width: '100%' }}>
-                <Typography variant="h5" component="h1" gutterBottom align="center">
-                    {negocio?.nombre}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }} align="center">
-                    Complete el formulario para recibir ofertas y descuentos exclusivos
-                </Typography>
+        <Box sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
+            <Paper sx={{ p: 3 }}>
+                {negocio && (
+                    <Typography variant="h5" gutterBottom>
+                        Formulario de contacto - {negocio.nombre}
+                    </Typography>
+                )}
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
@@ -126,15 +108,21 @@ const FormularioCliente = () => {
                     </Alert>
                 )}
 
+                {success && (
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                        ¡Formulario enviado exitosamente!
+                    </Alert>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <TextField
                         fullWidth
-                        label="Nombre completo"
+                        label="Nombre"
                         name="nombre"
                         value={formData.nombre}
                         onChange={handleChange}
-                        margin="normal"
                         required
+                        margin="normal"
                     />
                     <TextField
                         fullWidth
@@ -143,8 +131,8 @@ const FormularioCliente = () => {
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        margin="normal"
                         required
+                        margin="normal"
                     />
                     <TextField
                         fullWidth
@@ -152,14 +140,26 @@ const FormularioCliente = () => {
                         name="telefono"
                         value={formData.telefono}
                         onChange={handleChange}
-                        margin="normal"
                         required
+                        margin="normal"
                     />
-                    <Button
-                        type="submit"
+                    <TextField
                         fullWidth
-                        variant="contained"
-                        sx={{ mt: 3 }}
+                        label="Mensaje"
+                        name="mensaje"
+                        multiline
+                        rows={4}
+                        value={formData.mensaje}
+                        onChange={handleChange}
+                        required
+                        margin="normal"
+                    />
+                    <Button 
+                        type="submit" 
+                        variant="contained" 
+                        color="primary"
+                        fullWidth
+                        sx={{ mt: 2 }}
                     >
                         Enviar
                     </Button>

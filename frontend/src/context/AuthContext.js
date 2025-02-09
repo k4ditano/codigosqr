@@ -16,13 +16,15 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         try {
+            console.log('Enviando credenciales:', credentials);
             const response = await axiosClient.post('/auth/login', credentials);
-            const { token, user: userData } = response.data;
+            const { token } = response.data;
             localStorage.setItem('token', token);
             const decoded = jwt_decode(token);
             setUser(decoded);
             return decoded;
         } catch (error) {
+            console.error('Error en login:', error);
             throw error;
         }
     };
