@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 const qrService = require('../services/qrService');
+const QRCode = require('qrcode');
 
 class NegociosController {
     constructor() {
@@ -218,10 +219,9 @@ class NegociosController {
             // Si el QR no existe, generarlo
             if (!result.rows[0].codigo_qr) {
                 console.log('QR no encontrado, generando nuevo QR');
-                const qrCode = await qrService.generateBusinessQR(
-                    id,
-                    process.env.BASE_URL || 'http://localhost:3000'
-                );
+                const baseUrl = process.env.BASE_URL || 'http://145.223.100.119';
+                const qrUrl = `${baseUrl}/negocio/${id}`;
+                const qrCode = await QRCode.toDataURL(qrUrl);
                 
                 console.log('QR generado, actualizando en base de datos');
                 await client.query(
