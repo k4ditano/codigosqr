@@ -17,102 +17,39 @@ class NegociosController {
     async crear(req, res) {
         const client = await this.pool.connect();
         try {
-            await client.query('BEGIN');
+            const { nombre, email, telefono } = req.body;
             
-            const { nombre, usuario, password, email, telefono } = req.body;
-            
-            // Verificar que todos los campos requeridos estén presentes
-            if (!nombre || !email || !telefono || !usuario || !password) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({ 
-                    error: 'Todos los campos son requeridos' 
-                });
-            }
-
-            console.log('Datos recibidos:', {
-                nombre,
-                usuario,
-                email,
-                telefono,
-                password: '****' // Por seguridad solo logueamos que existe
-            });
-
-            // Verificar si el usuario ya existe
-            const userExists = await client.query(
-                'SELECT id FROM usuarios WHERE usuario = $1 OR email = $2',
-                [usuario, email]
-            );
-
-            if (userExists.rows.length > 0) {
-                await client.query('ROLLBACK');
-                const existingUser = userExists.rows[0];
-                const errorMessage = existingUser.email === email 
-                    ? 'El email ya está registrado' 
-                    : 'El nombre de usuario ya existe';
-                return res.status(400).json({ error: errorMessage });
-            }
-
-            // Hashear el password antes de guardarlo
+            // Generar usuario y contraseña
+            const usuario = email.split('@')[0];
+            const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Crear el usuario - Corregido el orden de los campos
-            const userResult = await client.query(
-                `INSERT INTO usuarios (
-                    nombre,
-                    usuario,
-                    password,
-                    email,
-                    role,
-                    estado
-                ) VALUES ($1, $2, $3, $4, 'business', true)
-                RETURNING id, usuario, nombre`,
-                [nombre, usuario, hashedPassword, email]
-            );
+            await client.query('BEGIN');
 
-            const { id: userId, usuario: userNombre } = userResult.rows[0];
-
-            // Crear el negocio
-            const negocioResult = await client.query(
+            // Insertar el negocio
+            const result = await client.query(
                 `INSERT INTO negocios (
-                    id,
                     nombre,
                     email,
                     telefono,
-                    usuario,
                     password,
-                    estado,
-                    role
-                ) VALUES ($1, $2, $3, $4, $5, $6, true, 'business')
+                    estado
+                ) VALUES ($1, $2, $3, $4, true)
                 RETURNING *`,
-                [userId, nombre, email, telefono, usuario, hashedPassword]
+                [nombre, email, telefono, hashedPassword]
             );
-
-            // Enviar email
-            try {
-                await emailService.sendBusinessCredentials(email, usuario, password);
-                console.log('Email de credenciales enviado exitosamente a:', email);
-            } catch (emailError) {
-                console.error('Error detallado al enviar email:', emailError);
-                // No detenemos la creación del negocio, pero registramos el error
-            }
 
             await client.query('COMMIT');
 
-            console.log('Negocio creado exitosamente:', negocioResult.rows[0]);
-
             res.status(201).json({
                 mensaje: 'Negocio creado exitosamente',
-                negocio: negocioResult.rows[0],
-                credenciales: {
-                    usuario: userNombre,
-                    id: userId
-                }
+                negocio: result.rows[0]
             });
 
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('Error detallado al crear negocio:', error);
-            res.status(500).json({ 
+            res.status(400).json({ 
                 error: 'Error al crear el negocio',
                 details: error.message 
             });
