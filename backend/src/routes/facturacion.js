@@ -1,47 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-const { authMiddleware, adminMiddleware, isBusiness } = require('../middleware/auth');
-const facturacionController = require('../controllers/facturacionController');
+const FacturacionController = require('../controllers/facturacionController');
+const { auth, admin, isBusiness } = require('../middleware/auth');
 
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-});
-
-// Rutas para administradores
-router.get('/', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => facturacionController.obtenerResumenAdmin(req, res)
-);
-
-router.put('/:id/aceptar', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => facturacionController.aceptarFactura(req, res)
-);
-
-router.put('/:id/pagar', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => facturacionController.marcarPagada(req, res)
-);
+// Rutas públicas
+router.get('/count', FacturacionController.contarFacturas);
 
 // Rutas para negocios
-router.get('/negocio/:negocioId', 
-    authMiddleware, 
-    isBusiness,
-    (req, res) => facturacionController.obtenerFacturacionNegocio(req, res)
-);
+router.get('/negocio/:id', auth, isBusiness, FacturacionController.obtenerFacturasNegocio);
+router.put('/:id/aceptar', auth, isBusiness, FacturacionController.aceptarFactura);
+router.put('/:id/pagar', auth, isBusiness, FacturacionController.pagarFactura);
 
-// Ruta para obtener una factura específica
-router.get('/:id', 
-    authMiddleware, 
-    (req, res) => facturacionController.obtener(req, res)
-);
+// Rutas protegidas que requieren admin
+router.get('/', auth, admin, FacturacionController.listar);
+router.post('/', auth, admin, FacturacionController.crear);
+router.get('/:id', auth, admin, FacturacionController.obtener);
+router.put('/:id', auth, admin, FacturacionController.actualizar);
+router.delete('/:id', auth, admin, FacturacionController.eliminar);
 
 module.exports = router; 

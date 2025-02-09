@@ -1,35 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const formulariosController = require('../controllers/formulariosController');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const FormulariosController = require('../controllers/formulariosController');
+const { auth, admin } = require('../middleware/auth');
 
 // Rutas públicas
-router.post('/', (req, res) => formulariosController.crear(req, res));
+router.get('/count', FormulariosController.contarFormularios);
+router.post('/publico', FormulariosController.crearPublico);
 
-// Ruta de conteo - MOVER ANTES de las rutas con parámetros
-router.get('/count', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => formulariosController.obtenerConteo(req, res)
-);
-
-// Rutas protegidas (admin)
-router.get('/', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => formulariosController.listar(req, res)
-);
-
-router.get('/:id', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => formulariosController.obtener(req, res)
-);
-
-router.put('/:id/atender', 
-    authMiddleware, 
-    adminMiddleware,
-    (req, res) => formulariosController.marcarAtendido(req, res)
-);
+// Rutas protegidas que requieren admin
+router.get('/', auth, admin, FormulariosController.listar);
+router.put('/:id/atender', auth, admin, FormulariosController.marcarAtendido);
+router.delete('/:id', auth, admin, FormulariosController.eliminar);
 
 module.exports = router; 

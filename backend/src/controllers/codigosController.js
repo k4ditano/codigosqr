@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const qrcode = require('qrcode');
 const emailService = require('../services/emailService');
+const pool = new Pool();
 
 class CodigosController {
     constructor() {
@@ -379,6 +380,22 @@ class CodigosController {
             client.release();
         }
     }
+
+    async contarCodigos(req, res) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query('SELECT COUNT(*) FROM codigos WHERE estado = true');
+            res.json({ count: parseInt(result.rows[0].count) });
+        } catch (error) {
+            console.error('Error al contar códigos:', error);
+            res.status(500).json({ 
+                error: 'Error al contar códigos',
+                details: error.message 
+            });
+        } finally {
+            client.release();
+        }
+    }
 }
 
-module.exports = CodigosController; 
+module.exports = new CodigosController(); 
