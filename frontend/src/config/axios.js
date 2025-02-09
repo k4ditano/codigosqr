@@ -5,8 +5,10 @@ const axiosClient = axios.create({
         ? 'http://145.223.100.119:5000/api'
         : 'http://localhost:5000/api',
     headers: {
-        'Content-Type': 'application/json'
-    }
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    withCredentials: true
 });
 
 // Interceptor para añadir el token y logs
@@ -18,11 +20,12 @@ axiosClient.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
-        // Logs
+        // Logs más detallados
         console.log('Realizando petición:', {
             url: config.url,
             method: config.method,
-            data: config.data
+            data: config.data,
+            headers: config.headers
         });
         
         return config;
@@ -35,15 +38,20 @@ axiosClient.interceptors.request.use(
 
 axiosClient.interceptors.response.use(
     (response) => {
+        console.log('Respuesta recibida:', {
+            status: response.status,
+            data: response.data,
+            headers: response.headers
+        });
         return response;
     },
     (error) => {
-        console.log('Response Error:', {
+        console.log('Error en respuesta:', {
             status: error.response?.status,
             data: error.response?.data,
-            message: error.message
+            message: error.message,
+            config: error.config
         });
-        console.error('Error en respuesta:', error);
         return Promise.reject(error);
     }
 );
