@@ -1,83 +1,133 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { es } from 'date-fns/locale';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
+import PrivateRoute from './components/PrivateRoute';
+
+// Admin components
+import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './components/admin/Dashboard';
 import Negocios from './components/admin/Negocios';
 import Codigos from './components/admin/Codigos';
 import Formularios from './components/admin/Formularios';
-import PrivateRoute from './components/PrivateRoute';
+import AdminFacturacion from './components/admin/Facturacion';
+
+// Business components
+import BusinessLayout from './layouts/BusinessLayout';
 import BusinessDashboard from './components/business/BusinessDashboard';
 import ValidarCodigo from './components/business/ValidarCodigo';
 import HistorialCanjes from './components/business/HistorialCanjes';
 import MiQR from './components/business/MiQR';
+import BusinessFacturacion from './components/business/Facturacion';
+
+// Public components
 import FormularioCliente from './components/public/FormularioCliente';
 import ValidarCodigoPublico from './components/public/ValidarCodigoPublico';
-import Facturacion from './components/business/Facturacion';
+
+// Componente de redirección
+const FormRedirect = () => {
+    const { businessId } = useParams();
+    return <Navigate to={`/formulario/${businessId}`} replace />;
+};
 
 const App = () => {
     return (
         <AuthProvider>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
-                <BrowserRouter>
+                <Router>
                     <Routes>
                         <Route path="/login" element={<Login />} />
-                        <Route path="/form/:businessId" element={<FormularioCliente />} />
+                        
+                        {/* Ruta de redirección usando el componente dedicado */}
+                        <Route path="/form/:businessId" element={<FormRedirect />} />
+                        
+                        {/* Ruta principal del formulario */}
+                        <Route path="/formulario/:businessId" element={<FormularioCliente />} />
                         <Route path="/validar/:codigo" element={<ValidarCodigoPublico />} />
+                        
                         <Route element={<Layout />}>
+                            {/* Admin Routes */}
                             <Route path="/admin" element={
                                 <PrivateRoute>
-                                    <Dashboard />
+                                    <AdminLayout>
+                                        <Dashboard />
+                                    </AdminLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/admin/negocios" element={
                                 <PrivateRoute>
-                                    <Negocios />
+                                    <AdminLayout>
+                                        <Negocios />
+                                    </AdminLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/admin/codigos" element={
                                 <PrivateRoute>
-                                    <Codigos />
+                                    <AdminLayout>
+                                        <Codigos />
+                                    </AdminLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/admin/formularios" element={
                                 <PrivateRoute>
-                                    <Formularios />
+                                    <AdminLayout>
+                                        <Formularios />
+                                    </AdminLayout>
                                 </PrivateRoute>
                             } />
+                            <Route path="/admin/facturacion" element={
+                                <PrivateRoute>
+                                    <AdminLayout>
+                                        <AdminFacturacion />
+                                    </AdminLayout>
+                                </PrivateRoute>
+                            } />
+
+                            {/* Business Routes */}
                             <Route path="/business" element={
                                 <PrivateRoute>
-                                    <BusinessDashboard />
+                                    <BusinessLayout>
+                                        <BusinessDashboard />
+                                    </BusinessLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/business/validar" element={
                                 <PrivateRoute>
-                                    <ValidarCodigo />
+                                    <BusinessLayout>
+                                        <ValidarCodigo />
+                                    </BusinessLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/business/historial" element={
                                 <PrivateRoute>
-                                    <HistorialCanjes />
+                                    <BusinessLayout>
+                                        <HistorialCanjes />
+                                    </BusinessLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/business/mi-qr" element={
                                 <PrivateRoute>
-                                    <MiQR />
+                                    <BusinessLayout>
+                                        <MiQR />
+                                    </BusinessLayout>
                                 </PrivateRoute>
                             } />
                             <Route path="/business/facturacion" element={
                                 <PrivateRoute>
-                                    <Facturacion />
+                                    <BusinessLayout>
+                                        <BusinessFacturacion />
+                                    </BusinessLayout>
                                 </PrivateRoute>
                             } />
+
                             <Route path="/" element={<Navigate to="/admin" replace />} />
                         </Route>
                     </Routes>
-                </BrowserRouter>
+                </Router>
             </LocalizationProvider>
         </AuthProvider>
     );

@@ -12,13 +12,8 @@ import {
     Alert,
     TextField,
     InputAdornment,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions
+    Button
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
 import SearchIcon from '@mui/icons-material/Search';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import axiosClient from '../../config/axios';
@@ -28,12 +23,94 @@ const Formularios = () => {
     const [filteredFormularios, setFilteredFormularios] = useState([]);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [openDialog, setOpenDialog] = useState(false);
-    const [selectedFormulario, setSelectedFormulario] = useState(null);
     const [success, setSuccess] = useState('');
-    const [formData, setFormData] = useState({
-        fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días por defecto
-    });
+
+    const handleMarcarAtendido = async (id) => {
+        try {
+            await axiosClient.put(`/formularios/${id}/atender`);
+            setSuccess('Formulario marcado como atendido');
+            cargarFormularios(); // Recargar la lista
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+            setError('Error al marcar el formulario como atendido');
+            setTimeout(() => setError(''), 3000);
+        }
+    };
+
+    const handleGenerarCodigo = async (formulario) => {
+        try {
+            setError('');
+            // Generar código de descuento
+            await axiosClient.post('/codigos', {
+                email: formulario.email,
+                negocio_id: formulario.negocio_id,
+                porcentaje: 10, // Porcentaje por defecto
+                fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 días
+            });
+
+            // Marcar el formulario como atendido
+            await axiosClient.put(`/formularios/${formulario.id}/atender`);
+            
+            setSuccess('Código de descuento generado y enviado exitosamente');
+            cargarFormularios(); // Recargar la lista
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+            console.error('Error:', error);
+            setError('Error al generar el código de descuento');
+            setTimeout(() => setError(''), 3000);
+        }
+    };
+
+    const columns = [
+        {
+            field: 'nombre',
+            headerName: 'Nombre',
+            flex: 1,
+            minWidth: 150
+        },
+        {
+            field: 'email',
+            headerName: 'Email',
+            flex: 1,
+            minWidth: 200
+        },
+        {
+            field: 'telefono',
+            headerName: 'Teléfono',
+            flex: 1,
+            minWidth: 120
+        },
+        {
+            field: 'negocio_nombre',
+            headerName: 'Negocio',
+            flex: 1,
+            minWidth: 150,
+            valueGetter: (params) => params.row.negocio_nombre || 'N/A'
+        },
+        {
+            field: 'fecha_formateada',
+            headerName: 'Fecha',
+            flex: 1,
+            minWidth: 150
+        },
+        {
+            field: 'acciones',
+            headerName: 'Acciones',
+            flex: 1,
+            minWidth: 150,
+            renderCell: (params) => (
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<LocalOfferIcon />}
+                    onClick={() => handleGenerarCodigo(params.row)}
+                    disabled={params.row.atendido}
+                >
+                    {params.row.atendido ? "Código Generado" : "Generar Código"}
+                </Button>
+            )
+        }
+    ];
 
     const filterFormularios = useCallback(() => {
         const filtered = formularios.filter(form => 
@@ -63,26 +140,6 @@ const Formularios = () => {
         filterFormularios();
     }, [filterFormularios]);
 
-    const handleGenerarCodigo = (formulario) => {
-        setSelectedFormulario(formulario);
-        setOpenDialog(true);
-    };
-
-    const handleConfirmarGeneracion = async () => {
-        try {
-            await axiosClient.post('/codigos', {
-                cliente_email: selectedFormulario.email,
-                negocio_id: selectedFormulario.negocio_id,
-                fecha_expiracion: formData.fecha_expiracion
-            });
-            setSuccess('Código generado y enviado exitosamente');
-            setOpenDialog(false);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (error) {
-            setError('Error al generar el código de descuento');
-        }
-    };
-
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleString('es-ES', {
             year: 'numeric',
@@ -96,7 +153,7 @@ const Formularios = () => {
     return (
         <Box>
             <Typography variant="h5" gutterBottom>
-                Formularios Recibidos
+                Formularios Pendientes
             </Typography>
 
             <Box sx={{ mb: 3 }}>
@@ -132,34 +189,34 @@ const Formularios = () => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Nombre</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Teléfono</TableCell>
-                            <TableCell>Negocio</TableCell>
-                            <TableCell>Fecha</TableCell>
-                            <TableCell>Acciones</TableCell>
+                            {columns.map((column) => (
+                                <TableCell key={column.field}>{column.headerName}</TableCell>
+                            ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredFormularios.map((form) => (
-                            <TableRow key={form.id}>
-                                <TableCell>{form.nombre}</TableCell>
-                                <TableCell>{form.email}</TableCell>
-                                <TableCell>{form.telefono}</TableCell>
-                                <TableCell>{form.negocio_nombre}</TableCell>
-                                <TableCell>{formatDate(form.fecha_envio)}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<LocalOfferIcon />}
-                                        onClick={() => handleGenerarCodigo(form)}
-                                        size="small"
-                                    >
-                                        Generar Código
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {filteredFormularios
+                            .filter(form => !form.atendido)
+                            .map((form) => (
+                                <TableRow key={form.id}>
+                                    <TableCell>{form.nombre}</TableCell>
+                                    <TableCell>{form.email}</TableCell>
+                                    <TableCell>{form.telefono}</TableCell>
+                                    <TableCell>{form.negocio_nombre || 'N/A'}</TableCell>
+                                    <TableCell>{form.fecha_formateada}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<LocalOfferIcon />}
+                                            onClick={() => handleGenerarCodigo(form)}
+                                            disabled={form.atendido}
+                                        >
+                                            {form.atendido ? "Código Generado" : "Generar Código"}
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                         {filteredFormularios.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={6} align="center">
@@ -170,49 +227,6 @@ const Formularios = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Generar Código de Descuento</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ pt: 2 }}>
-                        <Typography variant="body1" gutterBottom>
-                            Se generará un código de descuento para:
-                        </Typography>
-                        {selectedFormulario && (
-                            <>
-                                <Typography><strong>Cliente:</strong> {selectedFormulario.nombre}</Typography>
-                                <Typography><strong>Email:</strong> {selectedFormulario.email}</Typography>
-                                <Typography><strong>Negocio:</strong> {selectedFormulario.negocio_nombre}</Typography>
-                            </>
-                        )}
-                        <Box sx={{ mt: 2 }}>
-                            <DateTimePicker
-                                label="Fecha de Expiración"
-                                value={formData.fecha_expiracion}
-                                onChange={(newValue) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        fecha_expiracion: newValue
-                                    }));
-                                }}
-                                renderInput={(params) => <TextField {...params} fullWidth />}
-                            />
-                        </Box>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>
-                        Cancelar
-                    </Button>
-                    <Button 
-                        onClick={handleConfirmarGeneracion} 
-                        variant="contained"
-                        color="primary"
-                    >
-                        Generar y Enviar
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Box>
     );
 };

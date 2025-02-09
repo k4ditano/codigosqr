@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
     Paper,
     TextField,
     Button,
     Typography,
-    Alert
+    Alert,
+    Container
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import axiosClient from '../config/axios';
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = location.state?.redirectTo;
+    const mensaje = location.state?.mensaje;
     const { login } = useAuth();
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
@@ -33,13 +38,19 @@ const Login = () => {
 
         try {
             const user = await login(formData);
-            console.log('User role:', user.role); // Para debugging
-            if (user.role === 'admin') {
-                navigate('/admin');
+            console.log('Usuario autenticado:', user);
+            
+            if (redirectTo) {
+                navigate(redirectTo);
             } else {
-                navigate('/business');
+                if (user.role === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/business');
+                }
             }
         } catch (error) {
+            console.error('Error al iniciar sesión:', error);
             setError('Credenciales inválidas');
         }
     };
@@ -57,6 +68,12 @@ const Login = () => {
                 <Typography variant="h5" component="h1" gutterBottom align="center">
                     Iniciar Sesión
                 </Typography>
+
+                {mensaje && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        {mensaje}
+                    </Alert>
+                )}
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>

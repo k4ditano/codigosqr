@@ -21,7 +21,8 @@ import {
     Chip,
     Grid,
     MenuItem,
-    InputAdornment
+    InputAdornment,
+    Snackbar
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import QrCodeIcon from '@mui/icons-material/QrCode';
@@ -29,6 +30,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import axiosClient from '../../config/axios';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const Negocios = () => {
     const [negocios, setNegocios] = useState([]);
@@ -39,7 +41,9 @@ const Negocios = () => {
         nombre: '',
         email: '',
         telefono: '',
-        estado: true
+        estado: true,
+        usuario: '',
+        password: ''
     });
     const [error, setError] = useState('');
     const [qrDialog, setQrDialog] = useState(false);
@@ -48,14 +52,20 @@ const Negocios = () => {
     const [selectedEstado, setSelectedEstado] = useState('');
     const [fechaDesde, setFechaDesde] = useState(null);
     const [fechaHasta, setFechaHasta] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, negocioId: null });
 
     const cargarNegocios = useCallback(async () => {
         try {
+            setLoading(true);
             const response = await axiosClient.get('/negocios');
             setNegocios(response.data);
             setFilteredNegocios(response.data);
         } catch (error) {
-            setError('Error al cargar los negocios');
+            console.error('Error al cargar los negocios');
+        } finally {
+            setLoading(false);
         }
     }, []);
 
@@ -105,7 +115,9 @@ const Negocios = () => {
                 nombre: negocio.nombre,
                 email: negocio.email,
                 telefono: negocio.telefono,
-                estado: negocio.estado
+                estado: negocio.estado,
+                usuario: negocio.usuario,
+                password: negocio.password
             });
         } else {
             setSelectedNegocio(null);
@@ -113,24 +125,51 @@ const Negocios = () => {
                 nombre: '',
                 email: '',
                 telefono: '',
-                estado: true
+                estado: true,
+                usuario: '',
+                password: ''
             });
         }
         setOpenDialog(true);
     };
 
+    const handleClose = () => {
+        setOpenDialog(false);
+        setFormData({
+            nombre: '',
+            email: '',
+            telefono: '',
+            estado: true,
+            usuario: '',
+            password: ''
+        });
+        setError('');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        
+        if (!formData.nombre || !formData.usuario || !formData.password) {
+            setError('Los campos nombre, usuario y contraseña son obligatorios');
+            return;
+        }
+
         try {
-            if (selectedNegocio) {
-                await axiosClient.put(`/negocios/${selectedNegocio.id}`, formData);
-            } else {
-                await axiosClient.post('/negocios', formData);
-            }
-            setOpenDialog(false);
+            const response = await axiosClient.post('/negocios', {
+                nombre: formData.nombre,
+                email: formData.email,
+                telefono: formData.telefono,
+                usuario: formData.usuario,
+                password: formData.password
+            });
+            
+            console.log('Negocio creado:', response.data);
+            handleClose();
             cargarNegocios();
         } catch (error) {
-            setError('Error al guardar el negocio');
+            console.error('Error al crear negocio:', error);
+            setError(error.response?.data?.error || 'Error al crear el negocio');
         }
     };
 
@@ -157,6 +196,25 @@ const Negocios = () => {
         setSelectedEstado('');
         setFechaDesde(null);
         setFechaHasta(null);
+    };
+
+    const eliminarNegocio = async (id) => {
+        try {
+            await axiosClient.delete(`/negocios/${id}`);
+            setSnackbar({
+                open: true,
+                message: 'Negocio eliminado exitosamente',
+                severity: 'success'
+            });
+            cargarNegocios();
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: 'Error al eliminar el negocio',
+                severity: 'error'
+            });
+            console.error(error);
+        }
     };
 
     return (
@@ -272,6 +330,12 @@ const Negocios = () => {
                                     >
                                         <EditIcon />
                                     </IconButton>
+                                    <IconButton 
+                                        color="error"
+                                        onClick={() => setConfirmDialog({ open: true, negocioId: negocio.id })}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -322,6 +386,25 @@ const Negocios = () => {
                                 />
                             </Typography>
                         </Box>
+                        <TextField
+                            fullWidth
+                            label="Usuario"
+                            name="usuario"
+                            value={formData.usuario}
+                            onChange={handleChange}
+                            margin="normal"
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="Contraseña"
+                            name="password"
+                            type="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            margin="normal"
+                            required
+                        />
                     </Box>
                 </DialogContent>
                 <DialogActions>
@@ -371,6 +454,46 @@ const Negocios = () => {
                     )}
                 </DialogActions>
             </Dialog>
+
+            {/* Dialog de confirmación para eliminar */}
+            <Dialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ open: false, negocioId: null })}
+            >
+                <DialogTitle>Confirmar eliminación</DialogTitle>
+                <DialogContent>
+                    ¿Estás seguro de que deseas eliminar este negocio?
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDialog({ open: false, negocioId: null })}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={() => {
+                            eliminarNegocio(confirmDialog.negocioId);
+                            setConfirmDialog({ open: false, negocioId: null });
+                        }}
+                        color="error"
+                        variant="contained"
+                    >
+                        Eliminar
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Snackbar para mensajes */}
+            <Snackbar 
+                open={snackbar.open} 
+                autoHideDuration={6000} 
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+            >
+                <Alert 
+                    onClose={() => setSnackbar({ ...snackbar, open: false })} 
+                    severity={snackbar.severity}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

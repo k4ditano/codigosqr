@@ -1,18 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const negociosController = require('../controllers/negociosController');
-const { auth, isAdmin, isBusiness } = require('../middleware/auth');
+const NegociosController = require('../controllers/negociosController');
+const { authMiddleware, adminMiddleware, isBusiness } = require('../middleware/auth');
 
-// Rutas protegidas
-router.get('/count', auth, isAdmin, negociosController.getCount);
-router.post('/', auth, isAdmin, negociosController.crear);
-router.get('/', auth, isAdmin, negociosController.listar);
-router.put('/:id', auth, isAdmin, negociosController.actualizar);
+const negociosController = new NegociosController();
 
-// Ruta para obtener QR
-router.get('/:id/qr', auth, negociosController.obtenerQR);
+// Ruta pública - DEBE IR ANTES de las rutas protegidas y con parámetros
+router.get('/:id/public', (req, res) => negociosController.obtenerPublico(req, res));
 
-// Ruta para obtener negocio
-router.get('/:id', auth, negociosController.obtener);
+// Ruta de conteo
+router.get('/count',
+    authMiddleware,
+    adminMiddleware,
+    (req, res) => negociosController.obtenerConteo(req, res)
+);
+
+// Rutas para administrador
+router.post('/', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => negociosController.crear(req, res)
+);
+
+router.get('/', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => negociosController.listar(req, res)
+);
+
+// Rutas para negocios específicos
+router.get('/:id', 
+    authMiddleware, 
+    (req, res) => negociosController.obtener(req, res)
+);
+
+// Ruta para eliminar negocios
+router.delete('/:id', 
+    authMiddleware,
+    adminMiddleware,
+    (req, res) => negociosController.eliminar(req, res)
+);
+
+// Añadir esta ruta para el QR
+router.get('/:id/qr', 
+    authMiddleware, 
+    isBusiness,
+    (req, res) => negociosController.obtenerQR(req, res)
+);
 
 module.exports = router; 

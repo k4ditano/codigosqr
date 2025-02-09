@@ -1,16 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const formulariosController = require('../controllers/formulariosController');
-const { auth, isAdmin, isBusiness } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
-// Ruta pública para enviar formulario
-router.post('/', formulariosController.crear);
+// Rutas públicas
+router.post('/', (req, res) => formulariosController.crear(req, res));
 
-// Rutas protegidas
-router.get('/', auth, isAdmin, formulariosController.listar);
-router.get('/negocio/:negocio_id', auth, isBusiness, formulariosController.listarPorNegocio);
+// Ruta de conteo - MOVER ANTES de las rutas con parámetros
+router.get('/count', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => formulariosController.obtenerConteo(req, res)
+);
 
-// Agregar esta ruta
-router.get('/count', auth, isAdmin, formulariosController.getCount);
+// Rutas protegidas (admin)
+router.get('/', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => formulariosController.listar(req, res)
+);
+
+router.get('/:id', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => formulariosController.obtener(req, res)
+);
+
+router.put('/:id/atender', 
+    authMiddleware, 
+    adminMiddleware,
+    (req, res) => formulariosController.marcarAtendido(req, res)
+);
 
 module.exports = router; 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Typography,
+    Container,
     Paper,
+    Typography,
+    Grid,
     Table,
     TableBody,
     TableCell,
@@ -10,145 +12,193 @@ import {
     TableHead,
     TableRow,
     Alert,
-    Chip,
     CircularProgress,
-    Grid
+    TextField,
+    MenuItem,
+    Chip
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { es } from 'date-fns/locale';
+import clienteAxios from '../../config/axios';
 import { useAuth } from '../../context/AuthContext';
-import axiosClient from '../../config/axios';
 
 const Facturacion = () => {
-    const [facturacion, setFacturacion] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [facturas, setFacturas] = useState([]);
+    const [totales, setTotales] = useState({
+        total_pagado: 0,
+        total_pendiente: 0,
+        total_por_aceptar: 0
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const { user } = useAuth();
 
-    useEffect(() => {
-        const cargarFacturacion = async () => {
-            try {
-                console.log('Cargando facturación para usuario:', user);
-                const response = await axiosClient.get(`/api/facturacion/negocio/${user.id}`);
-                console.log('Respuesta de facturación:', response.data);
-                setFacturacion(response.data);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error detallado:', error);
-                setError('Error al cargar la información de facturación');
-                setLoading(false);
+    // Filtros
+    const [estado, setEstado] = useState('');
+    const [desde, setDesde] = useState(null);
+    const [hasta, setHasta] = useState(null);
+
+    const obtenerFacturas = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const params = new URLSearchParams();
+            if (estado) params.append('estado', estado);
+            if (desde) params.append('desde', desde.toISOString());
+            if (hasta) params.append('hasta', hasta.toISOString());
+
+            if (!user?.id) {
+                setError('Error: No se pudo identificar el negocio');
+                return;
             }
-        };
 
-        if (user?.id) {
-            cargarFacturacion();
+            const response = await clienteAxios.get(`/facturacion/negocio/${user.id}?${params}`);
+            setFacturas(response.data.facturas);
+            setTotales(response.data.totales);
+        } catch (error) {
+            console.error('Error al obtener facturas:', error);
+            setError(error.response?.data?.error || 'Error al cargar la información de facturación');
+        } finally {
+            setLoading(false);
         }
-    }, [user]);
-
-    const formatMes = (mes, año) => {
-        const fecha = new Date(año, mes - 1);
-        return fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
+    useEffect(() => {
+        obtenerFacturas();
+    }, [estado, desde, hasta]);
+
+    const getEstadoChip = (estado) => {
+        const config = {
+            pendiente: { color: 'warning', label: 'Pendiente' },
+            aceptada: { color: 'info', label: 'Por Pagar' },
+            pagada: { color: 'success', label: 'Pagada' }
+        };
+        return <Chip {...config[estado]} />;
+    };
 
     return (
-        <Box>
-            <Typography variant="h5" gutterBottom>
-                Facturación
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} locale={es}>
+            <Container maxWidth="lg">
+                <Box sx={{ mt: 4 }}>
+                    <Typography variant="h4" gutterBottom>
+                        Facturación
+                    </Typography>
 
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
+                    {/* Resumen de totales */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                <Typography variant="h6" color="text.secondary">
+                                    Total Pagado
+                                </Typography>
+                                <Typography variant="h4">
+                                    {(totales?.total_pagado || 0).toFixed(2)}€
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                <Typography variant="h6" color="text.secondary">
+                                    Pendiente de Pago
+                                </Typography>
+                                <Typography variant="h4">
+                                    {(totales?.total_pendiente || 0).toFixed(2)}€
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 2, textAlign: 'center' }}>
+                                <Typography variant="h6" color="text.secondary">
+                                    Por Aceptar
+                                </Typography>
+                                <Typography variant="h4">
+                                    {(totales?.total_por_aceptar || 0).toFixed(2)}€
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Grid>
 
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, textAlign: 'center' }}>
-                        <Typography variant="h6" gutterBottom>
-                            Total Pendiente
-                        </Typography>
-                        <Typography variant="h4">
-                            €{facturacion.reduce((acc, f) => 
-                                f.estado === 'pendiente' ? acc + parseFloat(f.monto_total) : acc, 0
-                            ).toFixed(2)}
-                        </Typography>
+                    {/* Filtros */}
+                    <Paper sx={{ p: 2, mb: 3 }}>
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} md={4}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Estado"
+                                    value={estado}
+                                    onChange={(e) => setEstado(e.target.value)}
+                                >
+                                    <MenuItem value="">Todos</MenuItem>
+                                    <MenuItem value="pendiente">Pendiente</MenuItem>
+                                    <MenuItem value="aceptada">Por Pagar</MenuItem>
+                                    <MenuItem value="pagada">Pagada</MenuItem>
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <DatePicker
+                                    label="Desde"
+                                    value={desde}
+                                    onChange={setDesde}
+                                    slotProps={{ textField: { fullWidth: true } }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                <DatePicker
+                                    label="Hasta"
+                                    value={hasta}
+                                    onChange={setHasta}
+                                    slotProps={{ textField: { fullWidth: true } }}
+                                />
+                            </Grid>
+                        </Grid>
                     </Paper>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, textAlign: 'center' }}>
-                        <Typography variant="h6" gutterBottom>
-                            Total Códigos Canjeados
-                        </Typography>
-                        <Typography variant="h4">
-                            {facturacion.reduce((acc, f) => acc + f.total_codigos, 0)}
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, textAlign: 'center' }}>
-                        <Typography variant="h6" gutterBottom>
-                            Total Pagado
-                        </Typography>
-                        <Typography variant="h4">
-                            €{facturacion.reduce((acc, f) => 
-                                f.estado === 'pagado' ? acc + parseFloat(f.monto_total) : acc, 0
-                            ).toFixed(2)}
-                        </Typography>
-                    </Paper>
-                </Grid>
-            </Grid>
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Período</TableCell>
-                            <TableCell>Códigos Canjeados</TableCell>
-                            <TableCell>Monto Total</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell>Fecha de Pago</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {facturacion.map((factura) => (
-                            <TableRow key={factura.id}>
-                                <TableCell>
-                                    {formatMes(factura.mes, factura.año)}
-                                </TableCell>
-                                <TableCell>{factura.total_codigos}</TableCell>
-                                <TableCell>€{parseFloat(factura.monto_total).toFixed(2)}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={factura.estado === 'pagado' ? 'Pagado' : 'Pendiente'}
-                                        color={factura.estado === 'pagado' ? 'success' : 'warning'}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    {factura.fecha_pago ? 
-                                        new Date(factura.fecha_pago).toLocaleDateString() : 
-                                        '-'
-                                    }
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {facturacion.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center">
-                                    No hay registros de facturación
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </Box>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <TableContainer component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Código</TableCell>
+                                        <TableCell>Fecha</TableCell>
+                                        <TableCell>Descuento</TableCell>
+                                        <TableCell>Ingreso Extra</TableCell>
+                                        <TableCell>Total</TableCell>
+                                        <TableCell>Estado</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {facturas.map((factura) => (
+                                        <TableRow key={factura.id}>
+                                            <TableCell>{factura.codigo}</TableCell>
+                                            <TableCell>
+                                                {new Date(factura.fecha_emision).toLocaleDateString('es-ES')}
+                                            </TableCell>
+                                            <TableCell>{factura.monto_descuento}€</TableCell>
+                                            <TableCell>{factura.monto_ingreso}€</TableCell>
+                                            <TableCell>{factura.monto_total}€</TableCell>
+                                            <TableCell>{getEstadoChip(factura.estado)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </Box>
+            </Container>
+        </LocalizationProvider>
     );
 };
 

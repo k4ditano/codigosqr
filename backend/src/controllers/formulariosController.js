@@ -1,64 +1,129 @@
-const pool = require('../config/db');
+const { Pool } = require('pg');
 
 class FormulariosController {
+    constructor() {
+        this.pool = new Pool({
+            user: process.env.DB_USER,
+            host: process.env.DB_HOST,
+            database: process.env.DB_NAME,
+            password: process.env.DB_PASSWORD,
+            port: process.env.DB_PORT,
+        });
+    }
+
     async crear(req, res) {
+        const client = await this.pool.connect();
         try {
-            const { nombre, email, telefono, negocio_id } = req.body;
+            const { nombre, email, telefono, mensaje, negocio_id } = req.body;
             
-            const result = await pool.query(
-                `INSERT INTO formulario_clientes (nombre, email, telefono, negocio_id)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id`,
-                [nombre, email, telefono, negocio_id]
+            const result = await client.query(
+                `INSERT INTO formularios (
+                    nombre, 
+                    email, 
+                    telefono, 
+                    mensaje, 
+                    negocio_id,
+                    created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                RETURNING *`,
+                [nombre, email, telefono, mensaje, negocio_id]
             );
 
-            res.status(201).json({
-                mensaje: 'Formulario enviado exitosamente',
-                id: result.rows[0].id
-            });
+            res.status(201).json(result.rows[0]);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Error al procesar el formulario' });
+            console.error('Error al crear formulario:', error);
+            res.status(500).json({ 
+                error: 'Error al crear formulario',
+                details: error.message 
+            });
+        } finally {
+            client.release();
         }
     }
 
     async listar(req, res) {
+        const client = await this.pool.connect();
         try {
-            const result = await pool.query(
-                `SELECT f.*, n.nombre as negocio_nombre
-                FROM formulario_clientes f
-                JOIN negocios n ON f.negocio_id = n.id
-                ORDER BY f.fecha_envio DESC`
+            const result = await client.query(
+                `SELECT 
+                    f.*,
+                    n.nombre as negocio_nombre,
+                    to_char(f.created_at, 'DD/MM/YYYY HH24:MI') as fecha_formateada
+                FROM formularios f
+                LEFT JOIN negocios n ON f.negocio_id = n.id
+                ORDER BY f.created_at DESC`
             );
             res.json(result.rows);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Error al listar los formularios' });
+            console.error('Error al listar formularios:', error);
+            res.status(500).json({ 
+                error: 'Error al listar formularios',
+                details: error.message 
+            });
+        } finally {
+            client.release();
         }
     }
 
-    async listarPorNegocio(req, res) {
+    async obtener(req, res) {
+        const client = await this.pool.connect();
         try {
-            const { negocio_id } = req.params;
-            const result = await pool.query(
-                `SELECT * FROM formulario_clientes
-                WHERE negocio_id = $1
-                ORDER BY fecha_envio DESC`,
-                [negocio_id]
+            const result = await client.query(
+                'SELECT * FROM formularios WHERE id = $1',
+                [req.params.id]
             );
-            res.json(result.rows);
+            
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Formulario no encontrado' });
+            }
+            
+            res.json(result.rows[0]);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Error al listar los formularios del negocio' });
+            console.error('Error al obtener formulario:', error);
+            res.status(500).json({ 
+                error: 'Error al obtener formulario',
+                details: error.message 
+            });
+        } finally {
+            client.release();
         }
     }
 
-    async getCount(req, res) {
+    async marcarAtendido(req, res) {
+        const client = await this.pool.connect();
         try {
-            const result = await pool.query('SELECT COUNT(*) FROM formulario_clientes');
-            res.json({ count: parseInt(result.rows[0].count) });
+            const result = await client.query(
+                'UPDATE formularios SET atendido = true WHERE id = $1 RETURNING *',
+                [req.params.id]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'Formulario no encontrado' });
+            }
+
+            res.json(result.rows[0]);
         } catch (error) {
-            res.status(500).json({ error: 'Error al obtener el conteo de formularios' });
+            console.error('Error al marcar formulario como atendido:', error);
+            res.status(500).json({ 
+                error: 'Error al actualizar formulario',
+                details: error.message 
+            });
+        } finally {
+            client.release();
+        }
+    }
+
+    async obtenerConteo(req, res) {
+        try {
+            const result = await this.pool.query('SELECT COUNT(*) as total FROM formularios');
+            res.json({ count: parseInt(result.rows[0].total) });
+        } catch (error) {
+            console.error('Error al obtener conteo de formularios:', error);
+            res.status(500).json({ 
+                msg: 'Error al obtener conteo de formularios',
+                error: error.message 
+            });
         }
     }
 }

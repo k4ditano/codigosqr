@@ -12,12 +12,19 @@ const facturacionRoutes = require('./routes/facturacion');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+}));
 app.use(express.json());
 
 // Middleware para logging de rutas (debug)
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    console.log('Headers:', req.headers);
+    if (req.method === 'POST') {
+        console.log('Body:', req.body);
+    }
     next();
 });
 
