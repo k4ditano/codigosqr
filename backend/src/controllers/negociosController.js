@@ -38,7 +38,8 @@ class NegociosController {
                 });
             }
 
-            // Generar contraseña aleatoria
+            // Generar usuario a partir del email y contraseña aleatoria
+            const usuario = email.split('@')[0];
             const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -49,11 +50,13 @@ class NegociosController {
                 `INSERT INTO negocios (
                     nombre,
                     email,
+                    usuario,
                     password,
-                    estado
-                ) VALUES ($1, $2, $3, true)
-                RETURNING id, nombre, email, estado`,
-                [nombre, email, hashedPassword]
+                    estado,
+                    role
+                ) VALUES ($1, $2, $3, $4, true, 'business')
+                RETURNING id, nombre, email, usuario, estado`,
+                [nombre, email, usuario, hashedPassword]
             );
 
             await client.query('COMMIT');
@@ -63,6 +66,7 @@ class NegociosController {
                 mensaje: 'Negocio creado exitosamente',
                 negocio: result.rows[0],
                 credenciales: {
+                    usuario: usuario,
                     email: email,
                     password: password // Contraseña sin hashear para mostrar al usuario
                 }
