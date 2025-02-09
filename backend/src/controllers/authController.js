@@ -14,39 +14,43 @@ class AuthController {
     }
 
     async login(req, res) {
+        const client = await this.pool.connect();
         try {
             const { usuario, password } = req.body;
-            console.log('Datos recibidos:', { usuario });
 
-            // Buscar usuario por nombre de usuario
-            const result = await this.pool.query(
-                'SELECT * FROM usuarios WHERE usuario = $1',
+            // Primero buscar en la tabla negocios
+            const result = await client.query(
+                `SELECT id, nombre, email, usuario, password, role 
+                FROM negocios 
+                WHERE usuario = $1 AND estado = true`,
                 [usuario]
             );
 
-            if (result.rows.length === 0) {
-                console.log(`Usuario "${usuario}" no encontrado`);
-                return res.status(401).json({ error: 'Credenciales inválidas' });
+            let user = result.rows[0];
+
+            // Si no se encuentra en negocios, buscar en usuarios
+            if (!user) {
+                const adminResult = await client.query(
+                    `SELECT id, nombre, usuario, password, role 
+                    FROM usuarios 
+                    WHERE usuario = $1 AND estado = true`,
+                    [usuario]
+                );
+                user = adminResult.rows[0];
             }
 
-            const user = result.rows[0];
-            console.log('Usuario encontrado:', {
-                id: user.id,
-                usuario: user.usuario,
-                role: user.role
-            });
+            if (!user) {
+                return res.status(401).json({ error: 'Usuario no encontrado' });
+            }
 
-            // Verificar contraseña
             const validPassword = await bcrypt.compare(password, user.password);
             if (!validPassword) {
-                console.log('Contraseña inválida');
-                return res.status(401).json({ error: 'Credenciales inválidas' });
+                return res.status(401).json({ error: 'Contraseña incorrecta' });
             }
 
-            // Generar token JWT
             const token = jwt.sign(
                 { 
-                    id: user.id,
+                    id: user.id, 
                     usuario: user.usuario,
                     role: user.role 
                 },
@@ -54,22 +58,21 @@ class AuthController {
                 { expiresIn: '24h' }
             );
 
-            // Enviar respuesta
-            const response = {
-                token,
-                user: {
-                    id: user.id,
-                    usuario: user.usuario,
-                    role: user.role
-                }
-            };
-            
-            console.log('Enviando respuesta:', response);
-            res.json(response);
+            res.json({ token, user: { 
+                id: user.id,
+                nombre: user.nombre,
+                usuario: user.usuario,
+                role: user.role
+            }});
 
         } catch (error) {
             console.error('Error en login:', error);
-            res.status(500).json({ error: 'Error en el servidor' });
+            res.status(500).json({ 
+                error: 'Error al iniciar sesión',
+                details: error.message 
+            });
+        } finally {
+            client.release();
         }
     }
 
