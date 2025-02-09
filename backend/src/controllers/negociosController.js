@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 const qrService = require('../services/qrService');
+const pool = new Pool();
 
 class NegociosController {
     constructor() {
@@ -122,31 +123,17 @@ class NegociosController {
     }
 
     async listar(req, res) {
-        const client = await this.pool.connect();
+        const client = await pool.connect();
         try {
             console.log('Listando negocios...');
-            const result = await client.query(
-                `SELECT 
-                    id, 
-                    nombre, 
-                    email, 
-                    telefono, 
-                    estado, 
-                    usuario,
-                    role,
-                    COALESCE(created_at, CURRENT_TIMESTAMP) as created_at 
-                FROM negocios 
-                WHERE role != $1 
-                ORDER BY created_at DESC`,
-                ['admin']
-            );
+            const result = await client.query('SELECT * FROM negocios ORDER BY created_at DESC');
             console.log('Negocios encontrados:', result.rows.length);
             res.json(result.rows);
         } catch (error) {
-            console.error('Error detallado al listar negocios:', error);
+            console.error('Error al listar negocios:', error);
             res.status(500).json({ 
-                error: 'Error al listar los negocios',
-                detalle: error.message 
+                error: 'Error al obtener negocios',
+                details: error.message 
             });
         } finally {
             client.release();
@@ -385,6 +372,22 @@ class NegociosController {
             client.release();
         }
     }
+
+    async contarNegocios(req, res) {
+        const client = await pool.connect();
+        try {
+            const result = await client.query('SELECT COUNT(*) FROM negocios WHERE estado = true');
+            res.json({ count: parseInt(result.rows[0].count) });
+        } catch (error) {
+            console.error('Error al contar negocios:', error);
+            res.status(500).json({ 
+                error: 'Error al contar negocios',
+                details: error.message 
+            });
+        } finally {
+            client.release();
+        }
+    }
 }
 
-module.exports = NegociosController; 
+module.exports = new NegociosController(); 
