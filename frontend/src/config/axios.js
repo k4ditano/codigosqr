@@ -9,10 +9,22 @@ const axiosClient = axios.create({
     }
 });
 
-// Interceptor para logs
+// Interceptor para añadir el token y logs
 axiosClient.interceptors.request.use(
     (config) => {
-        console.log('Realizando petición:', config);
+        // Añadir token de autenticación
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        // Logs
+        console.log('Realizando petición:', {
+            url: config.url,
+            method: config.method,
+            data: config.data
+        });
+        
         return config;
     },
     (error) => {

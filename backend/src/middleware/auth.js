@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-module.exports = (req, res, next) => {
+const authMiddleware = (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
         
@@ -31,4 +31,8 @@ const isBusiness = (req, res, next) => {
     next();
 };
 
-module.exports = { authMiddleware, adminMiddleware, isBusiness }; 
+module.exports = {
+    auth: authMiddleware,
+    admin: adminMiddleware,
+    isBusiness
+}; 
