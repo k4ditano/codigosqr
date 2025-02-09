@@ -251,33 +251,33 @@ class NegociosController {
                 return res.status(404).json({ error: 'Negocio no encontrado' });
             }
 
-            // 1. Primero eliminar las facturas
+            // 1. Primero eliminar los formularios
+            await client.query(
+                'DELETE FROM formularios WHERE negocio_id = $1',
+                [id]
+            );
+
+            // 2. Eliminar las facturas
             await client.query(
                 'DELETE FROM facturas WHERE negocio_id = $1',
                 [id]
             );
 
-            // 2. Luego eliminar los canjes
+            // 3. Eliminar los canjes
             await client.query(
                 'DELETE FROM canjes WHERE negocio_id = $1',
                 [id]
             );
 
-            // 3. Eliminar los códigos
+            // 4. Eliminar los códigos
             await client.query(
                 'DELETE FROM codigos WHERE negocio_id = $1',
                 [id]
             );
 
-            // 4. Eliminar el negocio
+            // 5. Finalmente eliminar el negocio
             await client.query(
                 'DELETE FROM negocios WHERE id = $1',
-                [id]
-            );
-
-            // 5. Finalmente eliminar el usuario asociado
-            await client.query(
-                'DELETE FROM usuarios WHERE id = $1',
                 [id]
             );
 
@@ -285,7 +285,7 @@ class NegociosController {
 
             res.json({ 
                 mensaje: 'Negocio y todos sus datos relacionados eliminados exitosamente',
-                detalles: 'Se han eliminado las facturas, canjes, códigos y datos de usuario asociados'
+                detalles: 'Se han eliminado los formularios, facturas, canjes y códigos asociados'
             });
 
         } catch (error) {
