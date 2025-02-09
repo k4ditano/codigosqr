@@ -17,15 +17,34 @@ class NegociosController {
     async crear(req, res) {
         const client = await this.pool.connect();
         try {
-            const { nombre, email, telefono } = req.body;
-            
+            const { nombre, email } = req.body;
+
+            // Validar datos requeridos
+            if (!nombre || !email) {
+                return res.status(400).json({ 
+                    error: 'Nombre y email son requeridos' 
+                });
+            }
+
+            // Verificar si el email ya existe
+            const emailExists = await client.query(
+                'SELECT id FROM negocios WHERE email = $1',
+                [email]
+            );
+
+            if (emailExists.rows.length > 0) {
+                return res.status(400).json({ 
+                    error: 'El email ya está registrado' 
+                });
+            }
+
             // Generar contraseña aleatoria
             const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await bcrypt.hash(password, 10);
 
             await client.query('BEGIN');
 
-            // Insertar el negocio con solo los campos que existen en la tabla
+            // Insertar el negocio
             const result = await client.query(
                 `INSERT INTO negocios (
                     nombre,
@@ -33,15 +52,20 @@ class NegociosController {
                     password,
                     estado
                 ) VALUES ($1, $2, $3, true)
-                RETURNING *`,
+                RETURNING id, nombre, email, estado`,
                 [nombre, email, hashedPassword]
             );
 
             await client.query('COMMIT');
 
+            // Enviar respuesta con las credenciales
             res.status(201).json({
                 mensaje: 'Negocio creado exitosamente',
-                negocio: result.rows[0]
+                negocio: result.rows[0],
+                credenciales: {
+                    email: email,
+                    password: password // Contraseña sin hashear para mostrar al usuario
+                }
             });
 
         } catch (error) {
