@@ -80,7 +80,7 @@ const Negocios = () => {
         let filtered = [...negocios];
 
         if (searchTerm) {
-            filtered = filtered.filter(negocio => 
+            filtered = filtered.filter(negocio =>
                 negocio.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 negocio.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 negocio.telefono?.includes(searchTerm)
@@ -88,18 +88,18 @@ const Negocios = () => {
         }
 
         if (selectedEstado !== '') {
-            filtered = filtered.filter(negocio => 
+            filtered = filtered.filter(negocio =>
                 negocio.estado === (selectedEstado === 'true')
             );
         }
 
         if (fechaDesde) {
-            filtered = filtered.filter(negocio => 
+            filtered = filtered.filter(negocio =>
                 new Date(negocio.created_at) >= fechaDesde
             );
         }
         if (fechaHasta) {
-            filtered = filtered.filter(negocio => 
+            filtered = filtered.filter(negocio =>
                 new Date(negocio.created_at) <= fechaHasta
             );
         }
@@ -172,7 +172,7 @@ const Negocios = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        
+
         if (!formData.nombre || !formData.email) {
             setError('Los campos nombre y email son obligatorios');
             return;
@@ -185,7 +185,7 @@ const Negocios = () => {
                 email: formData.email.trim(),
                 telefono: formData.telefono ? formData.telefono.trim() : '',
                 // Solo incluir email_asociado si tiene un valor
-                email_asociado: formData.email_asociado ? formData.email_asociado.trim() : null
+                email_asociado: formData.email.trim()
             };
 
             console.log('Datos a enviar:', dataToSend); // Debug log
@@ -198,7 +198,7 @@ const Negocios = () => {
             } else {
                 await axiosClient.post('/negocios', dataToSend);
             }
-            
+
             await cargarNegocios();
             handleClose();
             setSnackbar({
@@ -214,7 +214,7 @@ const Negocios = () => {
 
     const handleChange = (e) => {
         const { name, value, checked } = e.target;
-        
+
         if (name === 'estado') {
             setFormData(prev => ({
                 ...prev,
@@ -223,14 +223,6 @@ const Negocios = () => {
             return;
         }
 
-        // Para email_asociado, asegurarnos de que sea independiente
-        if (name === 'email_asociado') {
-            setFormData(prev => ({
-                ...prev,
-                email_asociado: value // Mantener el valor exactamente como se ingresa
-            }));
-            return;
-        }
 
         // Para otros campos
         setFormData(prev => ({
@@ -299,8 +291,8 @@ const Negocios = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h5">Gestión de Negocios</Typography>
-                <Button 
-                    variant="contained" 
+                <Button
+                    variant="contained"
                     onClick={() => handleOpenDialog()}
                 >
                     Nuevo Negocio
@@ -392,25 +384,25 @@ const Negocios = () => {
                                 <TableCell>{negocio.email_asociado === negocio.email ? '' : negocio.email_asociado}</TableCell>
                                 <TableCell>{negocio.telefono}</TableCell>
                                 <TableCell>
-                                    <Chip 
+                                    <Chip
                                         label={negocio.estado ? "Activo" : "Inactivo"}
                                         color={negocio.estado ? "success" : "error"}
                                     />
                                 </TableCell>
                                 <TableCell>
-                                    <IconButton 
+                                    <IconButton
                                         onClick={() => handleQRClick(negocio.id)}
                                         color="primary"
                                     >
                                         <QrCodeIcon />
                                     </IconButton>
-                                    <IconButton 
+                                    <IconButton
                                         onClick={() => handleOpenDialog(negocio)}
                                         color="primary"
                                     >
                                         <EditIcon />
                                     </IconButton>
-                                    <IconButton 
+                                    <IconButton
                                         color="error"
                                         onClick={() => setConfirmDialog({ open: true, negocioId: negocio.id })}
                                     >
@@ -423,10 +415,10 @@ const Negocios = () => {
                 </Table>
             </TableContainer>
 
-            <Dialog 
-                open={openDialog} 
-                onClose={handleClose} 
-                maxWidth="sm" 
+            <Dialog
+                open={openDialog}
+                onClose={handleClose}
+                maxWidth="sm"
                 fullWidth
                 TransitionProps={{
                     onEntered: () => {
@@ -505,8 +497,8 @@ const Negocios = () => {
                 </DialogActions>
             </Dialog>
 
-            <Dialog 
-                open={qrDialog} 
+            <Dialog
+                open={qrDialog}
                 onClose={() => setQrDialog(false)}
                 maxWidth="sm"
                 fullWidth
@@ -515,9 +507,9 @@ const Negocios = () => {
                 <DialogContent>
                     {selectedQR && (
                         <Box sx={{ textAlign: 'center', p: 2 }}>
-                            <img 
-                                src={selectedQR} 
-                                alt="QR Code" 
+                            <img
+                                src={selectedQR}
+                                alt="QR Code"
                                 style={{ maxWidth: '100%', width: '300px' }}
                             />
                         </Box>
@@ -526,7 +518,7 @@ const Negocios = () => {
                 <DialogActions>
                     <Button onClick={() => setQrDialog(false)}>Cerrar</Button>
                     {selectedQR && (
-                        <Button 
+                        <Button
                             onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = selectedQR;
@@ -556,7 +548,7 @@ const Negocios = () => {
                     <Button onClick={() => setConfirmDialog({ open: false, negocioId: null })}>
                         Cancelar
                     </Button>
-                    <Button 
+                    <Button
                         onClick={() => {
                             eliminarNegocio(confirmDialog.negocioId);
                             setConfirmDialog({ open: false, negocioId: null });
@@ -570,13 +562,13 @@ const Negocios = () => {
             </Dialog>
 
             {/* Snackbar para mensajes */}
-            <Snackbar 
-                open={snackbar.open} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
                 onClose={() => setSnackbar({ ...snackbar, open: false })}
             >
-                <Alert 
-                    onClose={() => setSnackbar({ ...snackbar, open: false })} 
+                <Alert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
                     severity={snackbar.severity}
                 >
                     {snackbar.message}
