@@ -16,6 +16,7 @@ class FormulariosController {
         const client = await this.pool.connect();
         try {
             const { nombre, email, telefono, mensaje, negocio_id } = req.body;
+            console.log('Recibido formulario para negocio:', negocio_id);
 
             // Primero obtener los datos del negocio
             const negocioResult = await client.query(
@@ -28,6 +29,11 @@ class FormulariosController {
             }
 
             const negocio = negocioResult.rows[0];
+
+            console.log('Datos del negocio encontrado:', {
+                nombre: negocio.nombre,
+                tieneEmailAsociado: !!negocio.email_asociado
+            });
 
             // Insertar el formulario
             const result = await client.query(
@@ -44,21 +50,38 @@ class FormulariosController {
                 [nombre, email, telefono, mensaje, negocio_id]
             );
 
-            // Enviar email de notificación al negocio
+            // Enviar email de notificación solo si existe email_asociado
             if (negocio.email_asociado) {
+                console.log('Intentando enviar notificación al email_asociado:', negocio.email_asociado);
                 try {
-                    await emailService.notificarNuevoFormulario({
+                    const emailEnviado = await emailService.notificarNuevoFormulario({
                         emailNegocio: negocio.email_asociado,
                         nombreNegocio: negocio.nombre,
                         datosFormulario: { nombre, email, telefono, mensaje }
                     });
+
+                    console.log('Resultado del envío de email:', emailEnviado);
+
+                    if (!emailEnviado) {
+                        console.error('El email no se pudo enviar pero el formulario se guardó');
+                    }
                 } catch (emailError) {
-                    console.error('Error al enviar notificación por email:', emailError);
-                    // No detenemos la creación del formulario si falla el envío del email
+                    console.error('Error detallado al enviar notificación por email:', {
+                        error: emailError.message,
+                        negocio: negocio.nombre,
+                        emailDestino: negocio.email_asociado
+                    });
                 }
+            } else {
+                console.log('El negocio no tiene email_asociado configurado para notificaciones');
             }
 
-            res.status(201).json(result.rows[0]);
+            res.status(201).json({
+                ...result.rows[0],
+                mensaje: 'Formulario creado exitosamente',
+                notificacionEnviada: !!negocio.email_asociado
+            });
+
         } catch (error) {
             console.error('Error al crear formulario:', error);
             res.status(500).json({

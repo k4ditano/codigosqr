@@ -489,3 +489,78 @@ Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara
    - Rollback de la transacción si falla la generación del QR
    - Logs detallados para diagnóstico
    - Mensajes de error específicos
+
+## Implementación de Notificaciones por Email para Formularios
+
+### Funcionalidad Implementada
+1. **Notificación Automática**
+   - Se envía email al recibir nuevo formulario
+   - Se utiliza el email_asociado del negocio como destinatario
+   - Incluye todos los datos del formulario recibido
+   - Proceso asíncrono que no bloquea la creación del formulario
+
+2. **Contenido del Email**
+   - Asunto personalizado con nombre del negocio
+   - Datos estructurados del formulario:
+     * Nombre del contacto
+     * Email del contacto
+     * Teléfono
+     * Mensaje completo
+   - Enlace al panel de administración
+
+3. **Manejo de Errores**
+   - Errores en el envío no bloquean el guardado del formulario
+   - Registro de errores en logs para monitoreo
+   - Respuesta exitosa incluso si falla el envío del email
+
+### Proceso Completo
+1. **Recepción del Formulario**
+   - Validación de datos
+   - Verificación del negocio y su email_asociado
+   - Guardado en base de datos
+
+2. **Envío de Notificación**
+   - Verificación de email_asociado configurado
+   - Preparación del contenido personalizado
+   - Envío asíncrono de la notificación
+   - Registro de resultado del envío
+
+3. **Seguridad y Privacidad**
+   - Uso de variables de entorno para configuración
+   - Conexión segura para envío de emails
+   - Manejo apropiado de datos sensibles
+
+### Beneficios
+1. Notificación inmediata de nuevos contactos
+2. Formato estructurado y fácil de leer
+3. Proceso robusto que prioriza el guardado de datos
+4. Sistema escalable para futuras mejoras
+
+## Actualización en el Sistema de Notificaciones de Formularios
+
+### Cambio Realizado
+- **Descripción**: Eliminación del fallback al email principal en notificaciones de formularios
+- **Razón**: El email principal no debe recibir datos de formularios de contacto
+- **Ubicación**: FormulariosController.js, método crear()
+
+### Comportamiento Actualizado
+1. **Notificaciones de Formularios**
+   - Solo se envían al email_asociado si está configurado
+   - No se usa el email principal como respaldo
+   - Si no hay email_asociado, no se envía notificación
+
+2. **Validaciones**
+   - Verificación explícita de email_asociado
+   - Sin fallback automático
+   - Registro claro en logs del estado de envío
+
+3. **Seguridad y Privacidad**
+   - Separación clara de responsabilidades entre emails
+   - Protección de datos de contacto
+   - Respeto a la configuración específica del negocio
+
+### Beneficios
+1. Mayor claridad en el flujo de notificaciones
+2. Mejor separación de responsabilidades entre emails
+3. Respeto a la configuración explícita del negocio
+4. Prevención de envío no deseado de datos
