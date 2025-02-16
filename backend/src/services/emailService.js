@@ -86,7 +86,7 @@ class EmailService {
         }
     }
 
-    async notificarNuevoFormulario({ emailNegocio, nombreNegocio, datosFormulario }) {
+    async notificarNuevoFormulario({ emailNegocio, nombreNegocio, datosFormulario, formularioId }) {
         try {
             console.log('Iniciando envío de notificación por email - Datos:', {
                 destino: emailNegocio,
@@ -97,14 +97,14 @@ class EmailService {
             const info = await this.transporter.sendMail({
                 from: `"Sistema de Descuentos" <${process.env.EMAIL_USER}>`,
                 to: emailNegocio,
-                subject: `Nuevo Formulario de Contacto - ${nombreNegocio}`,
+                subject: `Nuevo Formulario de Contacto #${formularioId} - ${nombreNegocio}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
                         <h1 style="color: #2c3e50; text-align: center;">Nuevo Formulario de Contacto</h1>
                         <p style="font-size: 16px;">Has recibido un nuevo formulario de contacto para <strong>${nombreNegocio}</strong>.</p>
                         
                         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
-                            <h2 style="color: #34495e; margin-top: 0;">Datos del formulario:</h2>
+                            <h2 style="color: #34495e; margin-top: 0;">Datos del formulario #${formularioId}:</h2>
                             <ul style="list-style: none; padding: 0;">
                                 <li style="margin-bottom: 10px;"><strong>Nombre:</strong> ${datosFormulario.nombre}</li>
                                 <li style="margin-bottom: 10px;"><strong>Email:</strong> ${datosFormulario.email}</li>
@@ -114,14 +114,6 @@ class EmailService {
                         </div>
                         
                         <p style="color: #7f8c8d; font-size: 14px;">Fecha y hora de recepción: ${new Date().toLocaleString('es-ES')}</p>
-                        
-                        <div style="text-align: center; margin-top: 30px;">
-                            <p style="margin-bottom: 5px;">Accede a tu panel para ver más detalles:</p>
-                            <a href="http://145.223.100.119/business" 
-                               style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                                Ir al Panel de Administración
-                            </a>
-                        </div>
                     </div>
                 `
             });

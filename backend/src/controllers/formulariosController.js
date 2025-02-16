@@ -51,6 +51,8 @@ class FormulariosController {
                 [nombre, email, telefono, mensaje, negocio_id]
             );
 
+            const formularioCreado = result.rows[0];
+
             // Enviar email de notificación solo si existe email_asociado
             if (negocio.email_asociado) {
                 console.log('Intentando enviar notificación al email_asociado:', negocio.email_asociado);
@@ -58,7 +60,8 @@ class FormulariosController {
                     const emailEnviado = await this.emailService.notificarNuevoFormulario({
                         emailNegocio: negocio.email_asociado,
                         nombreNegocio: negocio.nombre,
-                        datosFormulario: { nombre, email, telefono, mensaje }
+                        datosFormulario: { nombre, email, telefono, mensaje },
+                        formularioId: formularioCreado.id
                     });
 
                     console.log('Resultado del envío de email:', emailEnviado);
@@ -78,7 +81,7 @@ class FormulariosController {
             }
 
             res.status(201).json({
-                ...result.rows[0],
+                ...formularioCreado,
                 mensaje: 'Formulario creado exitosamente',
                 notificacionEnviada: !!negocio.email_asociado
             });
@@ -99,7 +102,13 @@ class FormulariosController {
         try {
             const result = await client.query(
                 `SELECT 
-                    f.*,
+                    f.id,
+                    f.nombre,
+                    f.email,
+                    f.telefono,
+                    f.mensaje,
+                    f.created_at,
+                    f.atendido,
                     n.nombre as negocio_nombre,
                     to_char(f.created_at, 'DD/MM/YYYY HH24:MI') as fecha_formateada
                 FROM formularios f

@@ -50,7 +50,7 @@ const Formularios = () => {
 
             // Marcar el formulario como atendido
             await axiosClient.put(`/formularios/${formulario.id}/atender`);
-            
+
             setSuccess('Código de descuento generado y enviado exitosamente');
             cargarFormularios(); // Recargar la lista
             setTimeout(() => setSuccess(''), 3000);
@@ -62,6 +62,12 @@ const Formularios = () => {
     };
 
     const columns = [
+        {
+            field: 'id',
+            headerName: 'ID',
+            flex: 0.5,
+            minWidth: 70
+        },
         {
             field: 'nombre',
             headerName: 'Nombre',
@@ -113,7 +119,8 @@ const Formularios = () => {
     ];
 
     const filterFormularios = useCallback(() => {
-        const filtered = formularios.filter(form => 
+        const filtered = formularios.filter(form =>
+            form.id.toString().includes(searchTerm) ||
             form.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             form.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
             form.telefono.includes(searchTerm) ||
@@ -159,7 +166,7 @@ const Formularios = () => {
             <Box sx={{ mb: 3 }}>
                 <TextField
                     fullWidth
-                    placeholder="Buscar por nombre, email, teléfono o negocio..."
+                    placeholder="Buscar por ID, nombre, email, teléfono o negocio..."
                     variant="outlined"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -199,6 +206,7 @@ const Formularios = () => {
                             .filter(form => !form.atendido)
                             .map((form) => (
                                 <TableRow key={form.id}>
+                                    <TableCell>{form.id}</TableCell>
                                     <TableCell>{form.nombre}</TableCell>
                                     <TableCell>{form.email}</TableCell>
                                     <TableCell>{form.telefono}</TableCell>
@@ -231,4 +239,4 @@ const Formularios = () => {
     );
 };
 
-export default Formularios; 
+export default Formularios;
