@@ -179,13 +179,16 @@ const Negocios = () => {
         }
 
         try {
-            // Construir los datos asegurándonos de que email_asociado sea independiente
+            // Construir el objeto de datos asegurando que email_asociado sea independiente
             const dataToSend = {
                 nombre: formData.nombre.trim(),
                 email: formData.email.trim(),
-                email_asociado: formData.email_asociado ? formData.email_asociado.trim() : null,
-                telefono: formData.telefono ? formData.telefono.trim() : ''
+                telefono: formData.telefono ? formData.telefono.trim() : '',
+                // Solo incluir email_asociado si tiene un valor
+                email_asociado: formData.email_asociado ? formData.email_asociado.trim() : null
             };
+
+            console.log('Datos a enviar:', dataToSend); // Debug log
 
             if (selectedNegocio) {
                 await axiosClient.put(`/negocios/${selectedNegocio.id}`, {
@@ -196,7 +199,7 @@ const Negocios = () => {
                 await axiosClient.post('/negocios', dataToSend);
             }
             
-            await cargarNegocios(); // Recargar los datos después de la operación
+            await cargarNegocios();
             handleClose();
             setSnackbar({
                 open: true,
@@ -386,7 +389,7 @@ const Negocios = () => {
                             <TableRow key={negocio.id}>
                                 <TableCell>{negocio.nombre}</TableCell>
                                 <TableCell>{negocio.email}</TableCell>
-                                <TableCell>{negocio.email_asociado || ''}</TableCell>
+                                <TableCell>{negocio.email_asociado === negocio.email ? '' : negocio.email_asociado}</TableCell>
                                 <TableCell>{negocio.telefono}</TableCell>
                                 <TableCell>
                                     <Chip 

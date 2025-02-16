@@ -19,6 +19,9 @@ class NegociosController {
         const client = await this.pool.connect();
         try {
             const { nombre, email, email_asociado, telefono } = req.body;
+            
+            // Log para debug
+            console.log('Datos recibidos:', { nombre, email, email_asociado, telefono });
 
             // Validar datos requeridos
             if (!nombre || !email) {
@@ -45,6 +48,16 @@ class NegociosController {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             await client.query('BEGIN');
+
+            // Log para debug de la consulta
+            console.log('Valores a insertar:', {
+                nombre,
+                email,
+                email_asociado: email_asociado || null,
+                telefono,
+                usuario,
+                hashedPassword
+            });
 
             // Insertar el negocio
             const result = await client.query(
