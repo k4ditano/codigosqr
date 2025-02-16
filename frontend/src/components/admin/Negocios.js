@@ -381,7 +381,7 @@ const Negocios = () => {
                             <TableRow key={negocio.id}>
                                 <TableCell>{negocio.nombre}</TableCell>
                                 <TableCell>{negocio.email}</TableCell>
-                                <TableCell>{negocio.email_asociado === negocio.email ? '' : negocio.email_asociado}</TableCell>
+                                <TableCell>{negocio.email_asociado}</TableCell>
                                 <TableCell>{negocio.telefono}</TableCell>
                                 <TableCell>
                                     <Chip
