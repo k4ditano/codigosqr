@@ -19,40 +19,41 @@ class NegociosController {
         const client = await this.pool.connect();
         try {
             const { nombre, email, email_asociado, telefono } = req.body;
-            
-            // Log para debug
-            console.log('Datos recibidos en el backend:', { nombre, email, email_asociado, telefono });
 
-            // Validar datos requeridos
+            console.log('Datos recibidos en crear:', {
+                nombre,
+                email,
+                email_asociado,
+                telefono
+            });
+
             if (!nombre || !email) {
-                return res.status(400).json({ 
-                    error: 'Nombre y email son requeridos' 
+                return res.status(400).json({
+                    error: 'Nombre y email son requeridos'
                 });
             }
 
-            // Verificar si el email ya existe
             const emailExists = await client.query(
                 'SELECT id FROM negocios WHERE email = $1',
                 [email]
             );
 
             if (emailExists.rows.length > 0) {
-                return res.status(400).json({ 
-                    error: 'El email ya está registrado' 
+                return res.status(400).json({
+                    error: 'El email ya está registrado'
                 });
             }
 
-            // Generar usuario a partir del email y contraseña aleatoria
             const usuario = email.split('@')[0];
             const password = Math.random().toString(36).slice(-8);
             const hashedPassword = await bcrypt.hash(password, 10);
 
             await client.query('BEGIN');
 
-            // Log para debug de la consulta
-            console.log('Email asociado antes de insertar:', email_asociado);
-            
-            // Insertar el negocio - Asegurarse de que email_asociado se guarde correctamente
+            // Verificar el valor de email_asociado antes de la inserción
+            console.log('Valor de email_asociado antes de insertar:', email_asociado);
+            console.log('Tipo de email_asociado:', typeof email_asociado);
+
             const insertQuery = `
                 INSERT INTO negocios (
                     nombre,
@@ -64,38 +65,40 @@ class NegociosController {
                     estado,
                     role
                 ) VALUES ($1, $2, $3, $4, $5, $6, true, 'business')
-                RETURNING id, nombre, email, email_asociado, telefono, usuario, estado
-            `;
-            
+                RETURNING *`;
+
             const insertValues = [
                 nombre,
                 email,
-                email_asociado || null,  // Si es una cadena vacía, usar null
+                email_asociado || null,  // Si es una cadena vacía o undefined, usar null
                 telefono || null,
                 usuario,
                 hashedPassword
             ];
 
-            console.log('Query values:', insertValues);
-            
+            console.log('Valores a insertar:', insertValues);
+
             const result = await client.query(insertQuery, insertValues);
 
-            console.log('Registro insertado:', result.rows[0]);
+            console.log('Resultado de la inserción:', result.rows[0]);
 
-            // Enviar email con las credenciales
             try {
                 await emailService.sendBusinessCredentials(
                     email,
                     usuario,
                     password
                 );
-                console.log('Email de credenciales enviado a:', email);
             } catch (emailError) {
                 console.error('Error al enviar email:', emailError);
-                // No detenemos la creación si falla el email
             }
 
             await client.query('COMMIT');
+
+            // Verificar los datos que se van a devolver
+            console.log('Datos a devolver en la respuesta:', {
+                mensaje: 'Negocio creado exitosamente',
+                negocio: result.rows[0]
+            });
 
             res.status(201).json({
                 mensaje: 'Negocio creado exitosamente',
@@ -108,10 +111,10 @@ class NegociosController {
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error detallado al crear negocio:', error);
-            res.status(400).json({ 
+            console.error('Error completo al crear negocio:', error);
+            res.status(400).json({
                 error: 'Error al crear el negocio',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -124,25 +127,28 @@ class NegociosController {
             console.log('Ejecutando consulta listar negocios');
             const result = await client.query(
                 `SELECT 
-                    id, 
-                    nombre, 
-                    email,
-                    email_asociado,
-                    telefono,
-                    estado,
-                    created_at
-                FROM negocios 
-                WHERE role != 'admin'
-                ORDER BY created_at DESC`
+                    n.id, 
+                    n.nombre, 
+                    n.email,
+                    n.email_asociado,
+                    n.telefono,
+                    n.estado,
+                    n.created_at,
+                    n.role
+                FROM negocios n
+                WHERE n.role != 'admin'
+                ORDER BY n.created_at DESC`
             );
-            
-            console.log('Resultados de listar:', result.rows);
+
+            // Log para depuración
+            console.log('Datos obtenidos de la base de datos:', result.rows);
+
             res.json(result.rows);
         } catch (error) {
             console.error('Error detallado al listar negocios:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al listar los negocios',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -170,9 +176,9 @@ class NegociosController {
             res.json(result.rows[0]);
         } catch (error) {
             console.error('Error al actualizar el negocio:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al actualizar el negocio',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -202,9 +208,9 @@ class NegociosController {
             res.json(result.rows[0]);
         } catch (error) {
             console.error('Error al obtener negocio:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al obtener el negocio',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -218,9 +224,9 @@ class NegociosController {
             res.json({ count: parseInt(result.rows[0].count) });
         } catch (error) {
             console.error('Error al obtener conteo de negocios:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al obtener el conteo de negocios',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -248,13 +254,13 @@ class NegociosController {
                 const baseUrl = process.env.BASE_URL || 'http://145.223.100.119';
                 const qrUrl = `${baseUrl}/formulario/${id}`;
                 const qrCode = await QRCode.toDataURL(qrUrl);
-                
+
                 console.log('QR generado, actualizando en base de datos');
                 await client.query(
                     'UPDATE negocios SET codigo_qr = $1 WHERE id = $2',
                     [qrCode, id]
                 );
-                
+
                 return res.json({ codigo_qr: qrCode });
             }
 
@@ -262,9 +268,9 @@ class NegociosController {
             res.json({ codigo_qr: result.rows[0].codigo_qr });
         } catch (error) {
             console.error('Error detallado al obtener QR:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al obtener el código QR',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -275,7 +281,7 @@ class NegociosController {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            
+
             const { id } = req.params;
 
             // Verificar si el negocio existe
@@ -321,7 +327,7 @@ class NegociosController {
 
             await client.query('COMMIT');
 
-            res.json({ 
+            res.json({
                 mensaje: 'Negocio y todos sus datos relacionados eliminados exitosamente',
                 detalles: 'Se han eliminado los formularios, facturas, canjes y códigos asociados'
             });
@@ -329,9 +335,9 @@ class NegociosController {
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('Error detallado al eliminar negocio:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al eliminar el negocio y sus datos relacionados',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -344,9 +350,9 @@ class NegociosController {
             res.json({ count: parseInt(result.rows[0].total) });
         } catch (error) {
             console.error('Error al obtener conteo de negocios:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 msg: 'Error al obtener conteo de negocios',
-                error: error.message 
+                error: error.message
             });
         }
     }
@@ -355,7 +361,7 @@ class NegociosController {
         const client = await this.pool.connect();
         try {
             const id = parseInt(req.params.id);
-            
+
             if (isNaN(id)) {
                 return res.status(400).json({ error: 'ID de negocio inválido' });
             }
@@ -372,9 +378,9 @@ class NegociosController {
             res.json(result.rows[0]);
         } catch (error) {
             console.error('Error al obtener negocio público:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al obtener la información del negocio',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
