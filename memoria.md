@@ -374,3 +374,118 @@ Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara
 - Mantener consistencia en la configuración de conexiones entre controladores
 - Verificar todos los parámetros requeridos en las configuraciones de base de datos
 - Usar variables de entorno para todos los parámetros de conexión
+
+## Corrección de Error en la Tabla Formularios
+
+### Problema Original
+- **Descripción**: Error 500 al acceder a la sección de formularios con mensaje "relation 'formularios' does not exist"
+- **Causa**: La tabla formularios existía pero no se podía acceder correctamente
+- **Impacto**: No se podían visualizar los formularios en el panel de administración
+
+### Solución Implementada
+1. **Verificación de la Estructura**
+   - Se confirmó la existencia de la tabla
+   - Se validó la estructura y permisos
+   - Se ejecutó el script de actualización para asegurar consistencia
+
+2. **Actualizaciones Realizadas**
+   - Ejecución del script update_formularios_table.sql
+   - Confirmación de índices y relaciones
+   - Validación de permisos de acceso
+
+3. **Resultados**
+   - Se restauró el acceso a la tabla formularios
+   - Se normalizó la visualización en el panel admin
+   - Se mantuvieron las relaciones con la tabla negocios
+
+### Prevención Futura
+1. **Verificaciones Recomendadas**
+   - Validar existencia de tablas antes de operaciones
+   - Confirmar permisos de usuario de base de datos
+   - Mantener scripts de migración actualizados
+
+2. **Monitoreo**
+   - Implementar logs más detallados
+   - Verificar regularmente la integridad de la base de datos
+   - Mantener documentación de la estructura actualizada
+
+## Corrección de Error en la Tabla Formularios
+
+### Resolución Exitosa
+1. **Diagnóstico del Problema**
+   - Error 500 al acceder a la sección de formularios
+   - Mensaje específico: "relation 'formularios' does not exist"
+   - Causa: Problema de acceso a la tabla existente
+
+2. **Solución Aplicada**
+   - Ejecución exitosa del script update_formularios_table.sql
+   - Verificación de índices y relaciones
+   - Confirmación de permisos correctos
+
+3. **Componentes Actualizados**
+   - Tabla formularios
+   - Índices:
+     * idx_formularios_negocio
+     * idx_formularios_fecha
+     * idx_formularios_atendido
+   - Referencias a negocios(id)
+
+4. **Validación de la Solución**
+   - Acceso exitoso a la sección de formularios
+   - Funcionamiento correcto de las consultas
+   - Integridad de datos mantenida
+
+### Mejores Prácticas Identificadas
+1. **Mantenimiento de Base de Datos**
+   - Verificar scripts de migración antes de ejecutar
+   - Mantener respaldos actualizados
+   - Documentar cambios en estructura
+
+2. **Gestión de Errores**
+   - Implementar mensajes de error descriptivos
+   - Mantener logs detallados
+   - Establecer procedimientos de verificación
+
+3. **Documentación**
+   - Actualizar documentación después de cambios
+   - Mantener registro de soluciones aplicadas
+   - Documentar procedimientos de verificación
+
+## Corrección en Generación de QR para Nuevos Negocios
+
+### Problema Identificado
+- **Descripción**: Los códigos QR no se generaban automáticamente al crear un nuevo negocio
+- **Impacto**: Los negocios nuevos no tenían su QR disponible inmediatamente después del registro
+- **Ubicación**: negociosController.js, método crear()
+
+### Solución Implementada
+1. **Modificaciones en el Controlador**
+   - Generación automática del QR después de la inserción del negocio
+   - Uso de BASE_URL para la construcción de la URL del formulario
+   - Almacenamiento del QR en la base de datos en la misma transacción
+
+2. **Proceso Mejorado**
+   - Creación del negocio
+   - Generación inmediata del QR
+   - Actualización de la tabla con el QR generado
+   - Todo dentro de la misma transacción para mantener consistencia
+
+3. **Beneficios**
+   - QR disponible inmediatamente después del registro
+   - Mayor consistencia en los datos
+   - Mejor experiencia para nuevos negocios
+
+### Detalles Técnicos
+1. **URL del Formulario**
+   - Formato: `${baseUrl}/formulario/${negocioId}`
+   - Uso de variables de entorno para la URL base
+   - Fallback a URL por defecto si no hay variable de entorno
+
+2. **Almacenamiento**
+   - El QR se guarda en formato base64 en la columna codigo_qr
+   - Se actualiza en la misma transacción que la creación del negocio
+
+3. **Manejo de Errores**
+   - Rollback de la transacción si falla la generación del QR
+   - Logs detallados para diagnóstico
+   - Mensajes de error específicos

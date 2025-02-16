@@ -70,8 +70,8 @@ class NegociosController {
             const insertValues = [
                 nombre,
                 email,
-                email_asociado,  // Si es una cadena vacía o undefined, usar null
-                telefono,
+                email_asociado || null,
+                telefono || null,
                 usuario,
                 hashedPassword
             ];
@@ -79,6 +79,17 @@ class NegociosController {
             console.log('Valores a insertar:', insertValues);
 
             const result = await client.query(insertQuery, insertValues);
+
+            // Generar QR después de crear el negocio
+            const baseUrl = process.env.BASE_URL || 'http://145.223.100.119';
+            const qrUrl = `${baseUrl}/formulario/${result.rows[0].id}`;
+            const qrCode = await QRCode.toDataURL(qrUrl);
+
+            // Guardar el QR en la base de datos
+            await client.query(
+                'UPDATE negocios SET codigo_qr = $1 WHERE id = $2',
+                [qrCode, result.rows[0].id]
+            );
 
             console.log('Resultado de la inserción:', result.rows[0]);
 
