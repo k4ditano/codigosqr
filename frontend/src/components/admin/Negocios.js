@@ -148,23 +148,16 @@ const Negocios = () => {
     const handleOpenDialog = (negocio = null) => {
         setSelectedNegocio(negocio);
         if (negocio) {
-            // Para edición, inicializar campos de forma independiente
+            // Al editar, mantener los valores originales
             setFormData({
                 nombre: negocio.nombre || '',
                 email: negocio.email || '',
-                email_asociado: '',  // Siempre iniciar vacío
+                email_asociado: negocio.email_asociado || '',  // Ya no usamos el email principal como fallback
                 telefono: negocio.telefono || '',
                 estado: negocio.estado
             });
-            // Establecer email_asociado en un segundo paso para evitar dependencias
-            setTimeout(() => {
-                setFormData(prev => ({
-                    ...prev,
-                    email_asociado: negocio.email_asociado || ''
-                }));
-            }, 0);
         } else {
-            // Para nuevo negocio
+            // Para nuevo negocio, todos los campos empiezan vacíos
             setFormData({
                 nombre: '',
                 email: '',
@@ -185,14 +178,15 @@ const Negocios = () => {
             return;
         }
 
-        const dataToSend = {
-            nombre: formData.nombre.trim(),
-            email: formData.email.trim(),
-            email_asociado: formData.email_asociado.trim() || '',
-            telefono: formData.telefono.trim() || ''
-        };
-
         try {
+            // Construir los datos asegurándonos de que email_asociado sea independiente
+            const dataToSend = {
+                nombre: formData.nombre.trim(),
+                email: formData.email.trim(),
+                email_asociado: formData.email_asociado ? formData.email_asociado.trim() : null,
+                telefono: formData.telefono ? formData.telefono.trim() : ''
+            };
+
             if (selectedNegocio) {
                 await axiosClient.put(`/negocios/${selectedNegocio.id}`, {
                     ...dataToSend,
@@ -202,8 +196,8 @@ const Negocios = () => {
                 await axiosClient.post('/negocios', dataToSend);
             }
             
+            await cargarNegocios(); // Recargar los datos después de la operación
             handleClose();
-            await cargarNegocios();
             setSnackbar({
                 open: true,
                 message: `Negocio ${selectedNegocio ? 'actualizado' : 'creado'} exitosamente`,
@@ -392,7 +386,7 @@ const Negocios = () => {
                             <TableRow key={negocio.id}>
                                 <TableCell>{negocio.nombre}</TableCell>
                                 <TableCell>{negocio.email}</TableCell>
-                                <TableCell>{negocio.email_asociado || negocio.email}</TableCell>
+                                <TableCell>{negocio.email_asociado || ''}</TableCell>
                                 <TableCell>{negocio.telefono}</TableCell>
                                 <TableCell>
                                     <Chip 
