@@ -21,7 +21,7 @@ class NegociosController {
             const { nombre, email, email_asociado, telefono } = req.body;
             
             // Log para debug
-            console.log('Datos recibidos:', { nombre, email, email_asociado, telefono });
+            console.log('Datos recibidos en el backend:', { nombre, email, email_asociado, telefono });
 
             // Validar datos requeridos
             if (!nombre || !email) {
@@ -50,18 +50,11 @@ class NegociosController {
             await client.query('BEGIN');
 
             // Log para debug de la consulta
-            console.log('Valores a insertar:', {
-                nombre,
-                email,
-                email_asociado: email_asociado || null,
-                telefono,
-                usuario,
-                hashedPassword
-            });
-
-            // Insertar el negocio
-            const result = await client.query(
-                `INSERT INTO negocios (
+            console.log('Email asociado antes de insertar:', email_asociado);
+            
+            // Insertar el negocio - Asegurarse de que email_asociado se guarde correctamente
+            const insertQuery = `
+                INSERT INTO negocios (
                     nombre,
                     email,
                     email_asociado,
@@ -71,9 +64,23 @@ class NegociosController {
                     estado,
                     role
                 ) VALUES ($1, $2, $3, $4, $5, $6, true, 'business')
-                RETURNING id, nombre, email, email_asociado, telefono, usuario, estado`,
-                [nombre, email, email_asociado || null, telefono, usuario, hashedPassword]
-            );
+                RETURNING id, nombre, email, email_asociado, telefono, usuario, estado
+            `;
+            
+            const insertValues = [
+                nombre,
+                email,
+                email_asociado || null,  // Si es una cadena vacía, usar null
+                telefono || null,
+                usuario,
+                hashedPassword
+            ];
+
+            console.log('Query values:', insertValues);
+            
+            const result = await client.query(insertQuery, insertValues);
+
+            console.log('Registro insertado:', result.rows[0]);
 
             // Enviar email con las credenciales
             try {
@@ -114,18 +121,22 @@ class NegociosController {
     async listar(req, res) {
         const client = await this.pool.connect();
         try {
+            console.log('Ejecutando consulta listar negocios');
             const result = await client.query(
                 `SELECT 
                     id, 
                     nombre, 
                     email,
                     email_asociado,
+                    telefono,
                     estado,
                     created_at
                 FROM negocios 
+                WHERE role != 'admin'
                 ORDER BY created_at DESC`
             );
             
+            console.log('Resultados de listar:', result.rows);
             res.json(result.rows);
         } catch (error) {
             console.error('Error detallado al listar negocios:', error);
