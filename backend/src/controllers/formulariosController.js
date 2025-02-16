@@ -1,15 +1,16 @@
 const { Pool } = require('pg');
-const emailService = require('../services/emailService');
+const EmailService = require('../services/emailService');
 
 class FormulariosController {
     constructor() {
         this.pool = new Pool({
             user: process.env.DB_USER,
             host: process.env.DB_HOST,
-            database: process.env.DB_NAME,  // Añadiendo el nombre de la base de datos
+            database: process.env.DB_NAME,
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
         });
+        this.emailService = new EmailService();
     }
 
     async crear(req, res) {
@@ -54,7 +55,7 @@ class FormulariosController {
             if (negocio.email_asociado) {
                 console.log('Intentando enviar notificación al email_asociado:', negocio.email_asociado);
                 try {
-                    const emailEnviado = await emailService.notificarNuevoFormulario({
+                    const emailEnviado = await this.emailService.notificarNuevoFormulario({
                         emailNegocio: negocio.email_asociado,
                         nombreNegocio: negocio.nombre,
                         datosFormulario: { nombre, email, telefono, mensaje }

@@ -564,3 +564,42 @@ Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara
 2. Mejor separación de responsabilidades entre emails
 3. Respeto a la configuración explícita del negocio
 4. Prevención de envío no deseado de datos
+
+## Corrección de Error en el Servicio de Email para Formularios
+
+### Problema Identificado
+- **Error**: TypeError al intentar usar emailService.notificarNuevoFormulario
+- **Causa**: Incorrecta inicialización y exportación del servicio de email
+- **Impacto**: No se enviaban las notificaciones de nuevos formularios
+
+### Solución Implementada
+1. **EmailService**
+   - Cambio en la exportación del servicio: ahora se exporta la clase en lugar de la instancia
+   - Corrección en la estructura de la clase y sus métodos
+   - Mejora en el manejo del transporter de nodemailer
+
+2. **FormulariosController**
+   - Inicialización del emailService en el constructor
+   - Uso correcto de this.emailService para acceder a los métodos
+   - Mejor manejo de los logs para debugging
+
+3. **Mejoras en el Sistema**
+   - Mejor gestión de las instancias de servicios
+   - Logs más detallados para monitoreo
+   - Mayor robustez en el manejo de errores
+
+### Impacto de los Cambios
+1. **Funcionalidad**
+   - Restauración del envío de notificaciones por email
+   - Mantenimiento del registro de formularios incluso si falla el email
+   - Mejor feedback sobre el estado del envío
+
+2. **Mantenibilidad**
+   - Código más limpio y organizado
+   - Mejor separación de responsabilidades
+   - Facilidad para testing y debugging
+
+3. **Monitoreo**
+   - Logs más detallados en cada paso
+   - Mejor trazabilidad de errores
+   - Información clara sobre éxitos y fallos
