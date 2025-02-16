@@ -295,3 +295,37 @@ CREATE TABLE IF NOT EXISTS facturas (
 2. **Mensajes de Ayuda**:
    - Email Principal: Indica uso para inicio de sesión y gestión
    - Email Asociado: Clarifica su uso para notificaciones
+
+## Corrección en el Manejo de Email Asociado
+### Problema Resuelto
+- **Descripción**: El campo de email para notificaciones estaba tomando automáticamente el valor del email principal en lugar de mantener su propio valor.
+- **Solución**: Corrección en el manejo del estado del formulario y en el procesamiento del backend.
+
+### Cambios Realizados
+1. **Frontend (Negocios.js)**
+   - Corrección en el manejo del estado del campo email_asociado
+   - Separación completa del email principal y email de notificaciones
+   - Envío independiente de cada campo al backend
+
+2. **Backend (negociosController.js)**
+   - Modificación del procesamiento del email_asociado
+   - Permitir valores nulos para email_asociado
+   - Manejo independiente de email principal y email de notificaciones
+
+### Comportamiento Actual
+1. **Email Principal**
+   - Mantiene su valor independiente
+   - Requerido para el registro
+   - Usado para credenciales de acceso
+
+2. **Email de Notificaciones**
+   - Mantiene su propio valor
+   - Campo opcional
+   - Si no se proporciona, se guarda como null
+   - No se auto-rellena con el email principal
+
+### Beneficios
+1. Mayor precisión en la gestión de contactos
+2. Separación clara de responsabilidades entre emails
+3. Prevención de confusiones en las notificaciones
+4. Mejor experiencia de usuario en el formulario

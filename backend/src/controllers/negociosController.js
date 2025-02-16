@@ -18,7 +18,7 @@ class NegociosController {
     async crear(req, res) {
         const client = await this.pool.connect();
         try {
-            const { nombre, email, email_asociado } = req.body;
+            const { nombre, email, email_asociado, telefono } = req.body;
 
             // Validar datos requeridos
             if (!nombre || !email) {
@@ -52,13 +52,14 @@ class NegociosController {
                     nombre,
                     email,
                     email_asociado,
+                    telefono,
                     usuario,
                     password,
                     estado,
                     role
-                ) VALUES ($1, $2, $3, $4, $5, true, 'business')
-                RETURNING id, nombre, email, email_asociado, usuario, estado`,
-                [nombre, email, email_asociado || email, usuario, hashedPassword]
+                ) VALUES ($1, $2, $3, $4, $5, $6, true, 'business')
+                RETURNING id, nombre, email, email_asociado, telefono, usuario, estado`,
+                [nombre, email, email_asociado || null, telefono, usuario, hashedPassword]
             );
 
             // Enviar email con las credenciales
@@ -68,7 +69,7 @@ class NegociosController {
                     usuario,
                     password
                 );
-                console.log('Email de credenciales enviado a:', email, 'con usuario:', usuario, 'y password:', password);
+                console.log('Email de credenciales enviado a:', email);
             } catch (emailError) {
                 console.error('Error al enviar email:', emailError);
                 // No detenemos la creación si falla el email
@@ -81,8 +82,7 @@ class NegociosController {
                 negocio: result.rows[0],
                 credenciales: {
                     usuario: usuario,
-                    email: email,
-                    password: password
+                    email: email
                 }
             });
 

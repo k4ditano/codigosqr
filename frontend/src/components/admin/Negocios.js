@@ -37,6 +37,14 @@ const Negocios = () => {
     const [filteredNegocios, setFilteredNegocios] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedNegocio, setSelectedNegocio] = useState(null);
+    const initialFormState = {
+        nombre: '',
+        email: '',
+        email_asociado: '',
+        telefono: '',
+        estado: true
+    };
+
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
@@ -107,6 +115,20 @@ const Negocios = () => {
         filterNegocios();
     }, [filterNegocios]);
 
+    useEffect(() => {
+        if (selectedNegocio) {
+            setFormData({
+                nombre: selectedNegocio.nombre || '',
+                email: selectedNegocio.email || '',
+                email_asociado: selectedNegocio.email_asociado || '',
+                telefono: selectedNegocio.telefono || '',
+                estado: selectedNegocio.estado
+            });
+        } else {
+            setFormData(initialFormState);
+        }
+    }, [selectedNegocio]);
+
     const resetForm = () => {
         setFormData({
             nombre: '',
@@ -119,23 +141,37 @@ const Negocios = () => {
 
     const handleClose = () => {
         setOpenDialog(false);
-        resetForm();
+        setFormData(initialFormState);
         setError('');
     };
 
     const handleOpenDialog = (negocio = null) => {
+        setSelectedNegocio(negocio);
         if (negocio) {
-            setSelectedNegocio(negocio);
+            // Para edición, inicializar campos de forma independiente
             setFormData({
                 nombre: negocio.nombre || '',
                 email: negocio.email || '',
-                email_asociado: negocio.email_asociado || '',
+                email_asociado: '',  // Siempre iniciar vacío
                 telefono: negocio.telefono || '',
                 estado: negocio.estado
             });
+            // Establecer email_asociado en un segundo paso para evitar dependencias
+            setTimeout(() => {
+                setFormData(prev => ({
+                    ...prev,
+                    email_asociado: negocio.email_asociado || ''
+                }));
+            }, 0);
         } else {
-            setSelectedNegocio(null);
-            resetForm();
+            // Para nuevo negocio
+            setFormData({
+                nombre: '',
+                email: '',
+                email_asociado: '',
+                telefono: '',
+                estado: true
+            });
         }
         setOpenDialog(true);
     };
@@ -149,26 +185,25 @@ const Negocios = () => {
             return;
         }
 
+        const dataToSend = {
+            nombre: formData.nombre.trim(),
+            email: formData.email.trim(),
+            email_asociado: formData.email_asociado.trim() || '',
+            telefono: formData.telefono.trim() || ''
+        };
+
         try {
             if (selectedNegocio) {
                 await axiosClient.put(`/negocios/${selectedNegocio.id}`, {
-                    nombre: formData.nombre,
-                    email: formData.email,
-                    email_asociado: formData.email_asociado,
-                    telefono: formData.telefono,
+                    ...dataToSend,
                     estado: formData.estado
                 });
             } else {
-                await axiosClient.post('/negocios', {
-                    nombre: formData.nombre,
-                    email: formData.email,
-                    email_asociado: formData.email_asociado,
-                    telefono: formData.telefono
-                });
+                await axiosClient.post('/negocios', dataToSend);
             }
             
             handleClose();
-            cargarNegocios();
+            await cargarNegocios();
             setSnackbar({
                 open: true,
                 message: `Negocio ${selectedNegocio ? 'actualizado' : 'creado'} exitosamente`,
@@ -182,9 +217,48 @@ const Negocios = () => {
 
     const handleChange = (e) => {
         const { name, value, checked } = e.target;
+        
+        if (name === 'estado') {
+            setFormData(prev => ({
+                ...prev,
+                estado: checked
+            }));
+            return;
+        }
+
+        // Para email_asociado, asegurarnos de que sea independiente
+        if (name === 'email_asociado') {
+            setFormData(prev => ({
+                ...prev,
+                email_asociado: value // Mantener el valor exactamente como se ingresa
+            }));
+            return;
+        }
+
+        // Para otros campos
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'estado' ? checked : value
+            [name]: value
+        }));
+    };
+
+    const handleEmailAsociadoChange = (e) => {
+        const value = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            email_asociado: value,
+            // Asegurarnos de que sea independiente del email principal
+            ...(value === prev.email ? { email_asociado: '' } : {})
+        }));
+    };
+
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            email: value,
+            // No modificar email_asociado cuando cambia el email principal
+            email_asociado: prev.email_asociado
         }));
     };
 
@@ -352,62 +426,79 @@ const Negocios = () => {
                 </Table>
             </TableContainer>
 
-            <Dialog open={openDialog} onClose={handleClose} maxWidth="sm" fullWidth>
+            <Dialog 
+                open={openDialog} 
+                onClose={handleClose} 
+                maxWidth="sm" 
+                fullWidth
+                TransitionProps={{
+                    onEntered: () => {
+                        // Asegurarnos de que los campos estén correctamente inicializados
+                        if (!selectedNegocio) {
+                            setFormData(prev => ({
+                                ...prev,
+                                email_asociado: ''
+                            }));
+                        }
+                    }
+                }}
+            >
                 <DialogTitle>
                     {selectedNegocio ? 'Editar Negocio' : 'Nuevo Negocio'}
                 </DialogTitle>
                 <DialogContent>
-                    <TextField
-                        autoFocus
-                        fullWidth
-                        label="Nombre del Negocio"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        margin="normal"
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="Email Principal"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        margin="normal"
-                        required
-                        helperText="Email principal para inicio de sesión"
-                    />
-                    <TextField
-                        fullWidth
-                        label="Email para Notificaciones"
-                        name="email_asociado"
-                        type="email"
-                        value={formData.email_asociado}
-                        onChange={handleChange}
-                        margin="normal"
-                        helperText="Email donde se recibirán las notificaciones (opcional)"
-                    />
-                    <TextField
-                        fullWidth
-                        label="Teléfono"
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                        margin="normal"
-                    />
-                    {selectedNegocio && (
-                        <Box sx={{ mt: 2 }}>
-                            <Typography component="label">
-                                Estado
-                                <Switch
-                                    name="estado"
-                                    checked={formData.estado}
-                                    onChange={handleChange}
-                                />
-                            </Typography>
-                        </Box>
-                    )}
+                    <Box component="form" sx={{ mt: 2 }} onSubmit={handleSubmit}>
+                        <TextField
+                            fullWidth
+                            label="Nombre del Negocio"
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleChange}
+                            margin="normal"
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email Principal"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleEmailChange}
+                            margin="normal"
+                            required
+                            helperText="Email principal para inicio de sesión"
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email para Notificaciones"
+                            name="email_asociado"
+                            type="email"
+                            value={formData.email_asociado}
+                            onChange={handleEmailAsociadoChange}
+                            margin="normal"
+                            helperText="Email donde se recibirán las notificaciones (opcional)"
+                        />
+                        <TextField
+                            fullWidth
+                            label="Teléfono"
+                            name="telefono"
+                            value={formData.telefono}
+                            onChange={handleChange}
+                            margin="normal"
+                        />
+                        {selectedNegocio && (
+                            <Box sx={{ mt: 2 }}>
+                                <Typography component="label">
+                                    Estado
+                                    <Switch
+                                        name="estado"
+                                        checked={formData.estado}
+                                        onChange={handleChange}
+                                    />
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose}>Cancelar</Button>
