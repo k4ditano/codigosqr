@@ -183,9 +183,9 @@ const Negocios = () => {
             const dataToSend = {
                 nombre: formData.nombre.trim(),
                 email: formData.email.trim(),
-                telefono: formData.telefono ? formData.telefono.trim() : '',
-                // Solo incluir email_asociado si tiene un valor
-                email_asociado: formData.email_asociado.trim()
+                email_asociado: formData.email_asociado.trim(),
+                telefono: formData.telefono ? formData.telefono.trim() : ''
+
             };
 
             console.log('Datos a enviar:', dataToSend); // Debug log

@@ -329,3 +329,31 @@ CREATE TABLE IF NOT EXISTS facturas (
 2. Separación clara de responsabilidades entre emails
 3. Prevención de confusiones en las notificaciones
 4. Mejor experiencia de usuario en el formulario
+
+## Mejoras en el Manejo de Emails de Negocios
+
+### Cambios Realizados:
+
+1. **Independencia de Emails**
+   - Se separó completamente la lógica del email principal y el email de notificaciones
+   - El email_asociado ahora se maneja de forma independiente sin depender del email principal
+   - Se eliminó la lógica que usaba el email principal como fallback para el email_asociado
+
+2. **Formulario de Negocios**
+   - Se actualizó el manejo de cambios en los campos de email
+   - Se mantiene el valor del email_asociado independientemente de los cambios en el email principal
+   - Se simplificó el objeto de datos enviado al backend
+   - Se mejoró la validación y el trimming de los campos
+
+3. **Interfaz de Usuario**
+   - Se clarificaron los labels de los campos:
+     - "Email Principal" para inicio de sesión
+     - "Email para Notificaciones" como campo opcional
+   - Se agregaron textos de ayuda (helperText) para mejor claridad
+
+4. **Validaciones**
+   - Se mantiene la validación de campos requeridos (nombre y email principal)
+   - El email_asociado permanece como campo opcional
+   - Se realiza limpieza de espacios en todos los campos antes del envío
+
+Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara separación entre el email de acceso y el email para notificaciones.
