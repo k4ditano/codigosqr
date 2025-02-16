@@ -357,3 +357,20 @@ CREATE TABLE IF NOT EXISTS facturas (
    - Se realiza limpieza de espacios en todos los campos antes del envío
 
 Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara separación entre el email de acceso y el email para notificaciones.
+
+## Corrección de Error en FormulariosController
+
+### Problema
+- **Descripción**: Error 500 al intentar acceder a la tabla "formularios" debido a configuración incompleta de la conexión a la base de datos
+- **Causa**: Faltaba el parámetro `database` en la configuración del pool de conexión
+- **Solución**: Se agregó el parámetro `database: process.env.DB_NAME` en el constructor del FormulariosController
+
+### Impacto
+1. Se restauró el acceso correcto a la tabla formularios
+2. Se normalizó la configuración del pool con los demás controladores
+3. Se evitan errores de conexión en todas las operaciones de formularios
+
+### Buenas Prácticas
+- Mantener consistencia en la configuración de conexiones entre controladores
+- Verificar todos los parámetros requeridos en las configuraciones de base de datos
+- Usar variables de entorno para todos los parámetros de conexión

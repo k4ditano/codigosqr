@@ -6,6 +6,7 @@ class FormulariosController {
         this.pool = new Pool({
             user: process.env.DB_USER,
             host: process.env.DB_HOST,
+            database: process.env.DB_NAME,  // Añadiendo el nombre de la base de datos
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
         });
@@ -15,7 +16,7 @@ class FormulariosController {
         const client = await this.pool.connect();
         try {
             const { nombre, email, telefono, mensaje, negocio_id } = req.body;
-            
+
             // Primero obtener los datos del negocio
             const negocioResult = await client.query(
                 'SELECT nombre, email_asociado FROM negocios WHERE id = $1',
@@ -27,7 +28,7 @@ class FormulariosController {
             }
 
             const negocio = negocioResult.rows[0];
-            
+
             // Insertar el formulario
             const result = await client.query(
                 `INSERT INTO formularios (
@@ -60,9 +61,9 @@ class FormulariosController {
             res.status(201).json(result.rows[0]);
         } catch (error) {
             console.error('Error al crear formulario:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al crear formulario',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -84,9 +85,9 @@ class FormulariosController {
             res.json(result.rows);
         } catch (error) {
             console.error('Error al listar formularios:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al listar formularios',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -100,17 +101,17 @@ class FormulariosController {
                 'SELECT * FROM formularios WHERE id = $1',
                 [req.params.id]
             );
-            
+
             if (result.rows.length === 0) {
                 return res.status(404).json({ error: 'Formulario no encontrado' });
             }
-            
+
             res.json(result.rows[0]);
         } catch (error) {
             console.error('Error al obtener formulario:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al obtener formulario',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -132,9 +133,9 @@ class FormulariosController {
             res.json(result.rows[0]);
         } catch (error) {
             console.error('Error al marcar formulario como atendido:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Error al actualizar formulario',
-                details: error.message 
+                details: error.message
             });
         } finally {
             client.release();
@@ -147,9 +148,9 @@ class FormulariosController {
             res.json({ count: parseInt(result.rows[0].total) });
         } catch (error) {
             console.error('Error al obtener conteo de formularios:', error);
-            res.status(500).json({ 
+            res.status(500).json({
                 msg: 'Error al obtener conteo de formularios',
-                error: error.message 
+                error: error.message
             });
         }
     }
