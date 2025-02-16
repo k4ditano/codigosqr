@@ -244,3 +244,31 @@ CREATE TABLE IF NOT EXISTS facturas (
 3. Estados de factura: pendiente, pagada, cancelada
 4. Integración con sistema de notificaciones
 5. Reportes y estadísticas
+
+## Actualización del Formulario de Negocios
+### Implementación del Campo Email Asociado
+1. **Frontend (Negocios.js)**
+   - Añadido campo "Email para Notificaciones" en el formulario
+   - Separación clara entre email principal y email de notificaciones
+   - Mensajes de ayuda descriptivos para cada campo:
+     - Email principal: Para inicio de sesión y gestión
+     - Email de notificaciones: Para recibir notificaciones de formularios (opcional)
+   - Validación y manejo automático cuando el email asociado no se proporciona
+   - Integración con el sistema existente de emails
+
+### Características
+1. **Campo Email Principal**
+   - Obligatorio para registro y acceso
+   - Usado para generación de credenciales
+   - Validación de formato de email
+2. **Campo Email Asociado**
+   - Opcional para notificaciones
+   - Si no se proporciona, se usa el email principal
+   - Permite separar acceso y notificaciones
+   - Facilita la gestión de múltiples contactos
+
+### Beneficios
+1. Mayor flexibilidad en la gestión de comunicaciones
+2. Separación clara de responsabilidades por email
+3. Mejora en la experiencia de usuario con mensajes descriptivos
+4. Mantiene compatibilidad con implementación existente

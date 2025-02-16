@@ -386,7 +386,7 @@ const Negocios = () => {
                             onChange={handleChange}
                             margin="normal"
                             required
-                            helperText="Email principal para inicio de sesión"
+                            helperText="Email principal para inicio de sesión y gestión del negocio"
                         />
                         <TextField
                             fullWidth
@@ -396,7 +396,7 @@ const Negocios = () => {
                             value={formData.email_asociado}
                             onChange={handleChange}
                             margin="normal"
-                            helperText="Email donde se recibirán las notificaciones de formularios (si es diferente al email principal)"
+                            helperText="Email donde se recibirán las notificaciones de formularios (opcional)"
                         />
                         <TextField
                             fullWidth
