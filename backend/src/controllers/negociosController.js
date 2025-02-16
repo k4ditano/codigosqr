@@ -70,8 +70,8 @@ class NegociosController {
             const insertValues = [
                 nombre,
                 email,
-                email_asociado || null,  // Si es una cadena vacía o undefined, usar null
-                telefono || null,
+                email_asociado,  // Si es una cadena vacía o undefined, usar null
+                telefono,
                 usuario,
                 hashedPassword
             ];
