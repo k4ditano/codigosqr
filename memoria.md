@@ -272,3 +272,26 @@ CREATE TABLE IF NOT EXISTS facturas (
 2. Separación clara de responsabilidades por email
 3. Mejora en la experiencia de usuario con mensajes descriptivos
 4. Mantiene compatibilidad con implementación existente
+
+## Corrección del Formulario de Nuevo Negocio
+### Problema Resuelto
+- **Descripción**: El campo de email asociado no se mostraba correctamente en el formulario de creación de nuevo negocio.
+- **Solución**: Reorganización de la estructura del formulario en el componente Negocios.js
+- **Cambios Realizados**:
+  1. Reordenamiento de campos del formulario
+  2. Separación clara de campos obligatorios y opcionales
+  3. Mantenimiento de la funcionalidad de edición existente
+  4. Mejora en la organización visual de los campos
+
+### Detalles Técnicos
+1. **Campos del Formulario**:
+   - Nombre del Negocio (requerido)
+   - Email Principal (requerido)
+   - Email para Notificaciones (opcional)
+   - Teléfono (opcional)
+   - Usuario y Contraseña (solo en creación)
+   - Estado (solo en edición)
+
+2. **Mensajes de Ayuda**:
+   - Email Principal: Indica uso para inicio de sesión y gestión
+   - Email Asociado: Clarifica su uso para notificaciones

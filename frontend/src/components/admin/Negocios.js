@@ -370,7 +370,7 @@ const Negocios = () => {
                     <Box component="form" sx={{ mt: 2 }}>
                         <TextField
                             fullWidth
-                            label="Nombre"
+                            label="Nombre del Negocio"
                             name="nombre"
                             value={formData.nombre}
                             onChange={handleChange}
@@ -379,7 +379,7 @@ const Negocios = () => {
                         />
                         <TextField
                             fullWidth
-                            label="Email"
+                            label="Email Principal"
                             name="email"
                             type="email"
                             value={formData.email}
@@ -396,7 +396,7 @@ const Negocios = () => {
                             value={formData.email_asociado}
                             onChange={handleChange}
                             margin="normal"
-                            helperText="Email donde se recibirán las notificaciones de formularios (opcional)"
+                            helperText="Email donde se recibirán las notificaciones de formularios (si es diferente al principal)"
                         />
                         <TextField
                             fullWidth
@@ -406,16 +406,6 @@ const Negocios = () => {
                             onChange={handleChange}
                             margin="normal"
                         />
-                        <Box sx={{ mt: 2 }}>
-                            <Typography component="label">
-                                Estado
-                                <Switch
-                                    name="estado"
-                                    checked={formData.estado}
-                                    onChange={handleChange}
-                                />
-                            </Typography>
-                        </Box>
                         {!selectedNegocio && (
                             <>
                                 <TextField
@@ -438,6 +428,18 @@ const Negocios = () => {
                                     required
                                 />
                             </>
+                        )}
+                        {selectedNegocio && (
+                            <Box sx={{ mt: 2 }}>
+                                <Typography component="label">
+                                    Estado
+                                    <Switch
+                                        name="estado"
+                                        checked={formData.estado}
+                                        onChange={handleChange}
+                                    />
+                                </Typography>
+                            </Box>
                         )}
                     </Box>
                 </DialogContent>
