@@ -362,7 +362,7 @@ const Negocios = () => {
                 </Table>
             </TableContainer>
 
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+            <Dialog open={openDialog} onClose={handleClose}>
                 <DialogTitle>
                     {selectedNegocio ? 'Editar Negocio' : 'Nuevo Negocio'}
                 </DialogTitle>
@@ -396,7 +396,7 @@ const Negocios = () => {
                             value={formData.email_asociado}
                             onChange={handleChange}
                             margin="normal"
-                            helperText="Email donde se recibirán las notificaciones de formularios (si es diferente al principal)"
+                            helperText="Email donde se recibirán las notificaciones de formularios (opcional)"
                         />
                         <TextField
                             fullWidth
@@ -406,29 +406,6 @@ const Negocios = () => {
                             onChange={handleChange}
                             margin="normal"
                         />
-                        {!selectedNegocio && (
-                            <>
-                                <TextField
-                                    fullWidth
-                                    label="Usuario"
-                                    name="usuario"
-                                    value={formData.usuario}
-                                    onChange={handleChange}
-                                    margin="normal"
-                                    required
-                                />
-                                <TextField
-                                    fullWidth
-                                    label="Contraseña"
-                                    name="password"
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    margin="normal"
-                                    required
-                                />
-                            </>
-                        )}
                         {selectedNegocio && (
                             <Box sx={{ mt: 2 }}>
                                 <Typography component="label">
@@ -444,7 +421,7 @@ const Negocios = () => {
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>
+                    <Button onClick={handleClose}>
                         Cancelar
                     </Button>
                     <Button onClick={handleSubmit} variant="contained">
