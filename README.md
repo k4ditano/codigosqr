@@ -1,6 +1,6 @@
 # Sistema de Códigos de Descuento
 
-Sistema web para la gestión de códigos de descuento con panel de administración, panel de negocios y generación de códigos QR.
+Sistema web para la gestión de códigos de descuento con panel de administración, panel de negocios, sistema de facturación y generación de códigos QR.
 
 ## 🚀 Características
 
@@ -8,6 +8,7 @@ Sistema web para la gestión de códigos de descuento con panel de administraci�
 - Panel de Negocios Asociados
 - Sistema de Códigos QR
 - Gestión de Códigos de Descuento
+- Sistema de Facturación Integrado
 - Sistema de Notificaciones por Email
 - Formularios de Captura de Datos
 
@@ -153,7 +154,12 @@ sistema-descuentos/
    - QR único por negocio
    - Formularios de captura
 
-4. **Notificaciones**
+4. **Facturación**
+   - Generación de facturas automática
+   - Historial de facturación por negocio
+   - Reportes de facturación
+
+5. **Notificaciones**
    - Envío automático de credenciales
    - Notificación de códigos de descuento
    - Alertas de sistema
@@ -174,4 +180,4 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
 
 Tu Nombre - [@tu_twitter](https://twitter.com/tu_twitter) - email@ejemplo.com
 
-Link del Proyecto: [https://github.com/tu-usuario/sistema-descuentos](https://github.com/tu-usuario/sistema-descuentos) 
+Link del Proyecto: [https://github.com/tu-usuario/sistema-descuentos](https://github.com/tu-usuario/sistema-descuentos)

@@ -40,6 +40,7 @@ const Negocios = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         email: '',
+        email_asociado: '',
         telefono: '',
         estado: true,
         usuario: '',
@@ -114,6 +115,7 @@ const Negocios = () => {
             setFormData({
                 nombre: negocio.nombre,
                 email: negocio.email,
+                email_asociado: negocio.email_asociado || negocio.email,
                 telefono: negocio.telefono,
                 estado: negocio.estado,
                 usuario: negocio.usuario,
@@ -124,6 +126,7 @@ const Negocios = () => {
             setFormData({
                 nombre: '',
                 email: '',
+                email_asociado: '',
                 telefono: '',
                 estado: true,
                 usuario: '',
@@ -138,6 +141,7 @@ const Negocios = () => {
         setFormData({
             nombre: '',
             email: '',
+            email_asociado: '',
             telefono: '',
             estado: true,
             usuario: '',
@@ -150,26 +154,39 @@ const Negocios = () => {
         e.preventDefault();
         setError('');
         
-        if (!formData.nombre || !formData.usuario || !formData.password) {
-            setError('Los campos nombre, usuario y contraseña son obligatorios');
+        if (!formData.nombre || !formData.email) {
+            setError('Los campos nombre y email son obligatorios');
             return;
         }
 
         try {
-            const response = await axiosClient.post('/negocios', {
-                nombre: formData.nombre,
-                email: formData.email,
-                telefono: formData.telefono,
-                usuario: formData.usuario,
-                password: formData.password
-            });
+            if (selectedNegocio) {
+                await axiosClient.put(`/negocios/${selectedNegocio.id}`, {
+                    nombre: formData.nombre,
+                    email: formData.email,
+                    email_asociado: formData.email_asociado || formData.email,
+                    telefono: formData.telefono,
+                    estado: formData.estado
+                });
+            } else {
+                await axiosClient.post('/negocios', {
+                    nombre: formData.nombre,
+                    email: formData.email,
+                    email_asociado: formData.email_asociado || formData.email,
+                    telefono: formData.telefono
+                });
+            }
             
-            console.log('Negocio creado:', response.data);
             handleClose();
             cargarNegocios();
+            setSnackbar({
+                open: true,
+                message: `Negocio ${selectedNegocio ? 'actualizado' : 'creado'} exitosamente`,
+                severity: 'success'
+            });
         } catch (error) {
-            console.error('Error al crear negocio:', error);
-            setError(error.response?.data?.error || 'Error al crear el negocio');
+            console.error('Error:', error);
+            setError(error.response?.data?.error || `Error al ${selectedNegocio ? 'actualizar' : 'crear'} el negocio`);
         }
     };
 
@@ -300,6 +317,7 @@ const Negocios = () => {
                         <TableRow>
                             <TableCell>Nombre</TableCell>
                             <TableCell>Email</TableCell>
+                            <TableCell>Email Notificaciones</TableCell>
                             <TableCell>Teléfono</TableCell>
                             <TableCell>Estado</TableCell>
                             <TableCell>Acciones</TableCell>
@@ -310,6 +328,7 @@ const Negocios = () => {
                             <TableRow key={negocio.id}>
                                 <TableCell>{negocio.nombre}</TableCell>
                                 <TableCell>{negocio.email}</TableCell>
+                                <TableCell>{negocio.email_asociado || negocio.email}</TableCell>
                                 <TableCell>{negocio.telefono}</TableCell>
                                 <TableCell>
                                     <Chip 
@@ -367,6 +386,17 @@ const Negocios = () => {
                             onChange={handleChange}
                             margin="normal"
                             required
+                            helperText="Email principal para inicio de sesión"
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email para Notificaciones"
+                            name="email_asociado"
+                            type="email"
+                            value={formData.email_asociado}
+                            onChange={handleChange}
+                            margin="normal"
+                            helperText="Email donde se recibirán las notificaciones de formularios (si es diferente al email principal)"
                         />
                         <TextField
                             fullWidth
@@ -386,25 +416,29 @@ const Negocios = () => {
                                 />
                             </Typography>
                         </Box>
-                        <TextField
-                            fullWidth
-                            label="Usuario"
-                            name="usuario"
-                            value={formData.usuario}
-                            onChange={handleChange}
-                            margin="normal"
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="Contraseña"
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            margin="normal"
-                            required
-                        />
+                        {!selectedNegocio && (
+                            <>
+                                <TextField
+                                    fullWidth
+                                    label="Usuario"
+                                    name="usuario"
+                                    value={formData.usuario}
+                                    onChange={handleChange}
+                                    margin="normal"
+                                    required
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Contraseña"
+                                    name="password"
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    margin="normal"
+                                    required
+                                />
+                            </>
+                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions>
@@ -498,4 +532,4 @@ const Negocios = () => {
     );
 };
 
-export default Negocios; 
+export default Negocios;

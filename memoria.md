@@ -196,4 +196,51 @@ const result = await pool.query(
 4. **Rutas**
    - Organizar por tipo de acceso (admin, negocio, público)
    - Usar middleware de autenticación consistentemente
-   - Mantener formato consistente 
+   - Mantener formato consistente
+
+## Manejo de Fechas y Datos en la Tabla de Facturas
+### Backend (facturacionController.js)
+```javascript
+// En el método listar facturas
+const result = await pool.query(`
+    SELECT 
+        f.id,
+        f.negocio_id,
+        n.nombre as negocio_nombre,
+        f.total,
+        f.estado,
+        f.detalles,
+        to_char(f.fecha_emision, 'DD/MM/YYYY HH24:MI') as fecha_emision
+    FROM facturas f
+    LEFT JOIN negocios n ON f.negocio_id = n.id
+    ORDER BY f.fecha_emision DESC
+`);
+```
+
+### Frontend (Facturacion.js)
+```javascript
+<TableCell>
+    {factura.fecha_emision || 
+     (factura.fecha_emision && new Date(factura.fecha_emision).toLocaleString('es-ES'))}
+</TableCell>
+```
+
+### Base de Datos (create_tables.sql)
+```sql
+CREATE TABLE IF NOT EXISTS facturas (
+    id SERIAL PRIMARY KEY,
+    negocio_id INTEGER REFERENCES negocios(id),
+    total DECIMAL(10,2) NOT NULL,
+    fecha_emision TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) DEFAULT 'pendiente',
+    detalles JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Puntos Clave del Sistema de Facturación
+1. Generación automática al procesar canjes
+2. Historial detallado por negocio
+3. Estados de factura: pendiente, pagada, cancelada
+4. Integración con sistema de notificaciones
+5. Reportes y estadísticas

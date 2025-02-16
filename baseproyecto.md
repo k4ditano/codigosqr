@@ -11,6 +11,10 @@ Esta especificación describe en detalle los requerimientos funcionales, técnic
   - Permitir al administrador general dar de alta, modificar y desactivar los negocios asociados.
 - **Gestión de Códigos de Descuento:**
   - Permitir la generación y administración de códigos de descuento, con la opción de asignarlos a clientes finales o a negocios en particular.
+- **Sistema de Facturación:**
+  - Gestión completa de facturas
+  - Generación automática de facturas para canjes
+  - Reportes y estadísticas de facturación
 - **Notificaciones por Correo:**
   - Al generar un código de descuento, el sistema debe enviar de forma automática un correo electrónico al cliente final con el código.
 - **Recepción de Datos desde Formularios QR:**
@@ -45,6 +49,7 @@ Se recomienda estructurar la información en las siguientes tablas o módulos de
 - **Negocios** (id, nombre, email, teléfono, usuario, contraseña encriptada, código QR, estado).
 - **Códigos de Descuento** (id, código, cliente_email, estado, fecha_creación, fecha_expiración, negocio_id opcional).
 - **Canjes** (id, codigo_descuento_id, negocio_id, fecha_canje, método de canje).
+- **Facturas** (id, negocio_id, total, fecha_emision, estado, detalles).
 - **Formulario Clientes** (id, nombre, email, teléfono, negocio_id, fecha_envío).
 
 ---

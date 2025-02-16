@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
+const emailService = require('../services/emailService');
 
 class FormulariosController {
     constructor() {
         this.pool = new Pool({
             user: process.env.DB_USER,
             host: process.env.DB_HOST,
-            database: process.env.DB_NAME,
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
         });
@@ -16,6 +16,19 @@ class FormulariosController {
         try {
             const { nombre, email, telefono, mensaje, negocio_id } = req.body;
             
+            // Primero obtener los datos del negocio
+            const negocioResult = await client.query(
+                'SELECT nombre, email_asociado FROM negocios WHERE id = $1',
+                [negocio_id]
+            );
+
+            if (negocioResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Negocio no encontrado' });
+            }
+
+            const negocio = negocioResult.rows[0];
+            
+            // Insertar el formulario
             const result = await client.query(
                 `INSERT INTO formularios (
                     nombre, 
@@ -29,6 +42,20 @@ class FormulariosController {
                 RETURNING *`,
                 [nombre, email, telefono, mensaje, negocio_id]
             );
+
+            // Enviar email de notificación al negocio
+            if (negocio.email_asociado) {
+                try {
+                    await emailService.notificarNuevoFormulario({
+                        emailNegocio: negocio.email_asociado,
+                        nombreNegocio: negocio.nombre,
+                        datosFormulario: { nombre, email, telefono, mensaje }
+                    });
+                } catch (emailError) {
+                    console.error('Error al enviar notificación por email:', emailError);
+                    // No detenemos la creación del formulario si falla el envío del email
+                }
+            }
 
             res.status(201).json(result.rows[0]);
         } catch (error) {
@@ -128,4 +155,4 @@ class FormulariosController {
     }
 }
 
-module.exports = new FormulariosController(); 
+module.exports = new FormulariosController();

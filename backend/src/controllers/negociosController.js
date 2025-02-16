@@ -18,7 +18,7 @@ class NegociosController {
     async crear(req, res) {
         const client = await this.pool.connect();
         try {
-            const { nombre, email } = req.body;
+            const { nombre, email, email_asociado } = req.body;
 
             // Validar datos requeridos
             if (!nombre || !email) {
@@ -51,13 +51,14 @@ class NegociosController {
                 `INSERT INTO negocios (
                     nombre,
                     email,
+                    email_asociado,
                     usuario,
                     password,
                     estado,
                     role
-                ) VALUES ($1, $2, $3, $4, true, 'business')
-                RETURNING id, nombre, email, usuario, estado`,
-                [nombre, email, usuario, hashedPassword]
+                ) VALUES ($1, $2, $3, $4, $5, true, 'business')
+                RETURNING id, nombre, email, email_asociado, usuario, estado`,
+                [nombre, email, email_asociado || email, usuario, hashedPassword]
             );
 
             // Enviar email con las credenciales
@@ -105,6 +106,7 @@ class NegociosController {
                     id, 
                     nombre, 
                     email,
+                    email_asociado,
                     estado,
                     created_at
                 FROM negocios 
@@ -127,14 +129,14 @@ class NegociosController {
         const client = await this.pool.connect();
         try {
             const { id } = req.params;
-            const { nombre, email, telefono, estado } = req.body;
+            const { nombre, email, email_asociado, telefono, estado } = req.body;
 
             const result = await client.query(
                 `UPDATE negocios 
-                SET nombre = $1, email = $2, telefono = $3, estado = $4
-                WHERE id = $5
+                SET nombre = $1, email = $2, email_asociado = $3, telefono = $4, estado = $5
+                WHERE id = $6
                 RETURNING *`,
-                [nombre, email, telefono, estado, id]
+                [nombre, email, email_asociado, telefono, estado, id]
             );
 
             if (result.rows.length === 0) {
@@ -356,4 +358,4 @@ class NegociosController {
     }
 }
 
-module.exports = NegociosController; 
+module.exports = NegociosController;

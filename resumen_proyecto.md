@@ -64,18 +64,19 @@ CREATE TABLE negocios (
 - Componentes para administración de negocios
 - Interfaz para validación de códigos
 - Dashboard para visualización de estadísticas
+- Sistema de facturación implementado
 
 ### Backend
 - API REST funcional
 - Sistema de autenticación con JWT
 - Generación y validación de códigos QR
 - Envío de emails automático
+- Endpoints de facturación funcionales
 
 ## Pendientes
-1. Implementar sistema de facturación
-2. Mejorar validaciones de formularios
-3. Agregar más pruebas unitarias
-4. Optimizar consultas a base de datos
+1. Mejorar validaciones de formularios
+2. Agregar más pruebas unitarias
+3. Optimizar consultas a base de datos
 
 ## Comandos Útiles
 
@@ -107,4 +108,4 @@ node src/utils/generateHash.js
 1. Revisar y mejorar el manejo de errores
 2. Implementar más funcionalidades de negocio
 3. Optimizar el rendimiento general
-4. Agregar documentación detallada 
+4. Agregar documentación detallada
