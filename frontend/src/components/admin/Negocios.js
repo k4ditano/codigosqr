@@ -22,7 +22,10 @@ import {
     Grid,
     MenuItem,
     InputAdornment,
-    Snackbar
+    Snackbar,
+    useTheme,
+    useMediaQuery,
+    Container
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import QrCodeIcon from '@mui/icons-material/QrCode';
@@ -62,6 +65,10 @@ const Negocios = () => {
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [confirmDialog, setConfirmDialog] = useState({ open: false, negocioId: null });
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
     const cargarNegocios = useCallback(async () => {
         try {
@@ -288,293 +295,376 @@ const Negocios = () => {
     };
 
     return (
-        <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5">Gestión de Negocios</Typography>
-                <Button
-                    variant="contained"
-                    onClick={() => handleOpenDialog()}
-                >
-                    Nuevo Negocio
-                </Button>
-            </Box>
+        <Container maxWidth="lg">
+            <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    gap: { xs: 2, sm: 0 },
+                    mb: 3
+                }}>
+                    <Typography
+                        variant="h5"
+                        sx={{
+                            fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                            textAlign: { xs: 'center', sm: 'left' }
+                        }}
+                    >
+                        Gestión de Negocios
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        onClick={() => handleOpenDialog()}
+                        fullWidth={isMobile}
+                    >
+                        Nuevo Negocio
+                    </Button>
+                </Box>
 
-            {/* Sección de filtros */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                    <FilterListIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Filtros
-                </Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            fullWidth
-                            label="Buscar"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            fullWidth
-                            select
-                            label="Estado"
-                            value={selectedEstado}
-                            onChange={(e) => setSelectedEstado(e.target.value)}
-                        >
-                            <MenuItem value="">Todos</MenuItem>
-                            <MenuItem value="true">Activo</MenuItem>
-                            <MenuItem value="false">Inactivo</MenuItem>
-                        </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DateTimePicker
-                            label="Desde"
-                            value={fechaDesde}
-                            onChange={setFechaDesde}
-                            renderInput={(params) => <TextField {...params} fullWidth />}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DateTimePicker
-                            label="Hasta"
-                            value={fechaHasta}
-                            onChange={setFechaHasta}
-                            renderInput={(params) => <TextField {...params} fullWidth />}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Button onClick={resetFilters} variant="outlined">
-                            Limpiar Filtros
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Paper>
-
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            )}
-
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Nombre</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Email Notificaciones</TableCell>
-                            <TableCell>Teléfono</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell>Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {filteredNegocios.map((negocio) => (
-                            <TableRow key={negocio.id}>
-                                <TableCell>{negocio.nombre}</TableCell>
-                                <TableCell>{negocio.email}</TableCell>
-                                <TableCell>{negocio.email_asociado}</TableCell>
-                                <TableCell>{negocio.telefono}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={negocio.estado ? "Activo" : "Inactivo"}
-                                        color={negocio.estado ? "success" : "error"}
+                {/* Sección de filtros */}
+                <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }} className="responsive-table-container">
+                    <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: { xs: '1rem', sm: '1.25rem' }
+                        }}
+                    >
+                        <FilterListIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Filtros
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                label="Buscar"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                size={isMobile ? "small" : "medium"}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                fullWidth
+                                select
+                                label="Estado"
+                                value={selectedEstado}
+                                onChange={(e) => setSelectedEstado(e.target.value)}
+                                size={isMobile ? "small" : "medium"}
+                            >
+                                <MenuItem value="">Todos</MenuItem>
+                                <MenuItem value="true">Activo</MenuItem>
+                                <MenuItem value="false">Inactivo</MenuItem>
+                            </TextField>
+                        </Grid>
+                        {!isMobile && (
+                            <>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <DateTimePicker
+                                        label="Desde"
+                                        value={fechaDesde}
+                                        onChange={setFechaDesde}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                size: isMobile ? "small" : "medium"
+                                            }
+                                        }}
                                     />
-                                </TableCell>
-                                <TableCell>
-                                    <IconButton
-                                        onClick={() => handleQRClick(negocio.id)}
-                                        color="primary"
-                                    >
-                                        <QrCodeIcon />
-                                    </IconButton>
-                                    <IconButton
-                                        onClick={() => handleOpenDialog(negocio)}
-                                        color="primary"
-                                    >
-                                        <EditIcon />
-                                    </IconButton>
-                                    <IconButton
-                                        color="error"
-                                        onClick={() => setConfirmDialog({ open: true, negocioId: negocio.id })}
-                                    >
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </TableCell>
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <DateTimePicker
+                                        label="Hasta"
+                                        value={fechaHasta}
+                                        onChange={setFechaHasta}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                size: isMobile ? "small" : "medium"
+                                            }
+                                        }}
+                                    />
+                                </Grid>
+                            </>
+                        )}
+                        <Grid item xs={12}>
+                            <Button
+                                onClick={resetFilters}
+                                variant="outlined"
+                                fullWidth={isMobile}
+                                size={isMobile ? "small" : "medium"}
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
+
+                {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+
+                <TableContainer component={Paper} className="responsive-table-container">
+                    <Table size={isMobile ? "small" : "medium"}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Nombre</TableCell>
+                                {!isMobile && <TableCell>Email</TableCell>}
+                                {!isTablet && <TableCell>Email Notificaciones</TableCell>}
+                                {!isMobile && <TableCell>Teléfono</TableCell>}
+                                <TableCell>Estado</TableCell>
+                                <TableCell>Acciones</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {filteredNegocios.map((negocio) => (
+                                <TableRow key={negocio.id}>
+                                    <TableCell>{negocio.nombre}</TableCell>
+                                    {!isMobile && <TableCell>{negocio.email}</TableCell>}
+                                    {!isTablet && <TableCell>{negocio.email_asociado}</TableCell>}
+                                    {!isMobile && <TableCell>{negocio.telefono}</TableCell>}
+                                    <TableCell>
+                                        <Chip
+                                            label={negocio.estado ? "Activo" : "Inactivo"}
+                                            color={negocio.estado ? "success" : "error"}
+                                            size={isMobile ? "small" : "medium"}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <IconButton
+                                                onClick={() => handleQRClick(negocio.id)}
+                                                color="primary"
+                                                size={isMobile ? "small" : "medium"}
+                                            >
+                                                <QrCodeIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                onClick={() => handleOpenDialog(negocio)}
+                                                color="primary"
+                                                size={isMobile ? "small" : "medium"}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton
+                                                color="error"
+                                                onClick={() => setConfirmDialog({ open: true, negocioId: negocio.id })}
+                                                size={isMobile ? "small" : "medium"}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
 
-            <Dialog
-                open={openDialog}
-                onClose={handleClose}
-                maxWidth="sm"
-                fullWidth
-                TransitionProps={{
-                    onEntered: () => {
-                        // Asegurarnos de que los campos estén correctamente inicializados
-                        if (!selectedNegocio) {
-                            setFormData(prev => ({
-                                ...prev,
-                                email_asociado: ''
-                            }));
-                        }
-                    }
-                }}
-            >
-                <DialogTitle>
-                    {selectedNegocio ? 'Editar Negocio' : 'Nuevo Negocio'}
-                </DialogTitle>
-                <DialogContent>
-                    <Box component="form" sx={{ mt: 2 }} onSubmit={handleSubmit}>
-                        <TextField
-                            fullWidth
-                            label="Nombre del Negocio"
-                            name="nombre"
-                            value={formData.nombre}
-                            onChange={handleChange}
-                            margin="normal"
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="Email Principal"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleEmailChange}
-                            margin="normal"
-                            required
-                            helperText="Email principal para inicio de sesión"
-                        />
-                        <TextField
-                            fullWidth
-                            label="Email para Notificaciones"
-                            name="email_asociado"
-                            type="email"
-                            value={formData.email_asociado}
-                            onChange={handleEmailAsociadoChange}
-                            margin="normal"
-                            helperText="Email donde se recibirán las notificaciones (opcional)"
-                        />
-                        <TextField
-                            fullWidth
-                            label="Teléfono"
-                            name="telefono"
-                            value={formData.telefono}
-                            onChange={handleChange}
-                            margin="normal"
-                        />
-                        {selectedNegocio && (
-                            <Box sx={{ mt: 2 }}>
-                                <Typography component="label">
-                                    Estado
-                                    <Switch
-                                        name="estado"
-                                        checked={formData.estado}
-                                        onChange={handleChange}
-                                    />
-                                </Typography>
+                {/* Dialog para crear/editar */}
+                <Dialog
+                    open={openDialog}
+                    onClose={handleClose}
+                    maxWidth="sm"
+                    fullWidth
+                    fullScreen={isMobile}
+                >
+                    <DialogTitle sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                        {selectedNegocio ? 'Editar Negocio' : 'Nuevo Negocio'}
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box component="form" sx={{ mt: 2 }}>
+                            <TextField
+                                fullWidth
+                                label="Nombre del Negocio"
+                                name="nombre"
+                                value={formData.nombre}
+                                onChange={handleChange}
+                                margin="normal"
+                                required
+                                size={isMobile ? "small" : "medium"}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Email Principal"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleEmailChange}
+                                margin="normal"
+                                required
+                                size={isMobile ? "small" : "medium"}
+                                helperText="Email principal para inicio de sesión"
+                            />
+                            <TextField
+                                fullWidth
+                                label="Email para Notificaciones"
+                                name="email_asociado"
+                                type="email"
+                                value={formData.email_asociado}
+                                onChange={handleEmailAsociadoChange}
+                                margin="normal"
+                                size={isMobile ? "small" : "medium"}
+                                helperText="Email donde se recibirán las notificaciones (opcional)"
+                            />
+                            <TextField
+                                fullWidth
+                                label="Teléfono"
+                                name="telefono"
+                                value={formData.telefono}
+                                onChange={handleChange}
+                                margin="normal"
+                                size={isMobile ? "small" : "medium"}
+                            />
+                            {selectedNegocio && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography component="label" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                                        Estado
+                                        <Switch
+                                            name="estado"
+                                            checked={formData.estado}
+                                            onChange={handleChange}
+                                            size={isMobile ? "small" : "medium"}
+                                        />
+                                    </Typography>
+                                </Box>
+                            )}
+                        </Box>
+                    </DialogContent>
+                    <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+                        <Button onClick={handleClose} size={isMobile ? "small" : "medium"}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            variant="contained"
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            {selectedNegocio ? 'Actualizar' : 'Crear'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Dialog para QR */}
+                <Dialog
+                    open={qrDialog}
+                    onClose={() => setQrDialog(false)}
+                    maxWidth="xs"
+                    fullWidth
+                >
+                    <DialogTitle sx={{
+                        textAlign: 'center',
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                    }}>
+                        Código QR del Negocio
+                    </DialogTitle>
+                    <DialogContent>
+                        {selectedQR && (
+                            <Box sx={{
+                                textAlign: 'center',
+                                p: { xs: 1, sm: 2 }
+                            }}>
+                                <img
+                                    src={selectedQR}
+                                    alt="QR Code"
+                                    style={{
+                                        maxWidth: '100%',
+                                        width: isMobile ? '200px' : '300px'
+                                    }}
+                                />
                             </Box>
                         )}
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancelar</Button>
-                    <Button onClick={handleSubmit} variant="contained">
-                        {selectedNegocio ? 'Actualizar' : 'Crear'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                    </DialogContent>
+                    <DialogActions sx={{ p: { xs: 1, sm: 2 } }}>
+                        <Button
+                            onClick={() => setQrDialog(false)}
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Cerrar
+                        </Button>
+                        {selectedQR && (
+                            <Button
+                                onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = selectedQR;
+                                    link.download = 'qr-code.png';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                }}
+                                color="primary"
+                                size={isMobile ? "small" : "medium"}
+                            >
+                                Descargar
+                            </Button>
+                        )}
+                    </DialogActions>
+                </Dialog>
 
-            <Dialog
-                open={qrDialog}
-                onClose={() => setQrDialog(false)}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle>Código QR del Negocio</DialogTitle>
-                <DialogContent>
-                    {selectedQR && (
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                            <img
-                                src={selectedQR}
-                                alt="QR Code"
-                                style={{ maxWidth: '100%', width: '300px' }}
-                            />
-                        </Box>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setQrDialog(false)}>Cerrar</Button>
-                    {selectedQR && (
+                {/* Dialog de confirmación */}
+                <Dialog
+                    open={confirmDialog.open}
+                    onClose={() => setConfirmDialog({ open: false, negocioId: null })}
+                    maxWidth="xs"
+                    fullWidth
+                >
+                    <DialogTitle sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                        Confirmar eliminación
+                    </DialogTitle>
+                    <DialogContent>
+                        <Typography sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                            ¿Estás seguro de que deseas eliminar este negocio?
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            onClick={() => setConfirmDialog({ open: false, negocioId: null })}
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Cancelar
+                        </Button>
                         <Button
                             onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = selectedQR;
-                                link.download = 'qr-code.png';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
+                                eliminarNegocio(confirmDialog.negocioId);
+                                setConfirmDialog({ open: false, negocioId: null });
                             }}
-                            color="primary"
+                            color="error"
+                            variant="contained"
+                            size={isMobile ? "small" : "medium"}
                         >
-                            Descargar
+                            Eliminar
                         </Button>
-                    )}
-                </DialogActions>
-            </Dialog>
+                    </DialogActions>
+                </Dialog>
 
-            {/* Dialog de confirmación para eliminar */}
-            <Dialog
-                open={confirmDialog.open}
-                onClose={() => setConfirmDialog({ open: false, negocioId: null })}
-            >
-                <DialogTitle>Confirmar eliminación</DialogTitle>
-                <DialogContent>
-                    ¿Estás seguro de que deseas eliminar este negocio?
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setConfirmDialog({ open: false, negocioId: null })}>
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            eliminarNegocio(confirmDialog.negocioId);
-                            setConfirmDialog({ open: false, negocioId: null });
-                        }}
-                        color="error"
-                        variant="contained"
-                    >
-                        Eliminar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Snackbar para mensajes */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={() => setSnackbar({ ...snackbar, open: false })}
-            >
-                <Alert
+                <Snackbar
+                    open={snackbar.open}
+                    autoHideDuration={6000}
                     onClose={() => setSnackbar({ ...snackbar, open: false })}
-                    severity={snackbar.severity}
                 >
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
-        </Box>
+                    <Alert
+                        onClose={() => setSnackbar({ ...snackbar, open: false })}
+                        severity={snackbar.severity}
+                        sx={{ width: '100%' }}
+                    >
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </Box>
+        </Container>
     );
 };
 

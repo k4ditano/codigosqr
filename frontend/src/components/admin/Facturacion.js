@@ -20,7 +20,9 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Chip
+    Chip,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -60,6 +62,10 @@ const Facturacion = () => {
         severity: 'success'
     });
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
     const obtenerResumen = async () => {
         setLoading(true);
         setError(null);
@@ -69,8 +75,7 @@ const Facturacion = () => {
             if (hasta) params.append('hasta', hasta.toISOString());
 
             const response = await clienteAxios.get(`/facturacion?${params}`);
-            
-            // Agrupar por negocio para mostrar el resumen
+
             const facturasPorNegocio = response.data.reduce((acc, factura) => {
                 if (!acc[factura.negocio_id]) {
                     acc[factura.negocio_id] = {
@@ -102,16 +107,12 @@ const Facturacion = () => {
 
     const handleAceptar = async (id) => {
         try {
-            // Mostrar loading
             setLoading(true);
             setError(null);
 
-            const response = await clienteAxios.put(`/facturacion/${id}/aceptar`);
-            
-            // Actualizar datos
+            await clienteAxios.put(`/facturacion/${id}/aceptar`);
             await obtenerResumen();
-            
-            // Si el diálogo está abierto, actualizar los detalles
+
             if (openDialog && selectedFactura) {
                 const negocioActual = resumen.find(r => r.negocio_id === selectedFactura.facturas[0]?.negocio_id);
                 if (negocioActual) {
@@ -122,7 +123,6 @@ const Facturacion = () => {
                 }
             }
 
-            // Mostrar mensaje de éxito
             setSnackbar({
                 open: true,
                 message: 'Factura aceptada correctamente',
@@ -145,9 +145,8 @@ const Facturacion = () => {
     const handlePagar = async (id) => {
         try {
             await clienteAxios.put(`/facturacion/${id}/pagar`);
-            await obtenerResumen();  // Refrescar datos generales
-            
-            // Si el diálogo está abierto, actualizar los detalles con los datos nuevos
+            await obtenerResumen();
+
             if (openDialog && selectedFactura) {
                 const negocioActual = resumen.find(r => r.negocio_id === selectedFactura.facturas[0]?.negocio_id);
                 if (negocioActual) {
@@ -175,20 +174,39 @@ const Facturacion = () => {
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} locale={es}>
             <Container maxWidth="lg">
-                <Box sx={{ mt: 4 }}>
-                    <Typography variant="h4" gutterBottom>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Typography
+                        variant="h4"
+                        gutterBottom
+                        sx={{
+                            fontSize: { xs: '1.5rem', sm: '2rem' },
+                            mb: { xs: 2, sm: 3 }
+                        }}
+                    >
                         Gestión de Facturación
                     </Typography>
 
                     {/* Filtros de fecha */}
-                    <Paper sx={{ p: 2, mb: 3 }}>
+                    <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3 }} className="responsive-table-container">
+                        <Typography
+                            variant="h6"
+                            gutterBottom
+                            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                        >
+                            Filtros
+                        </Typography>
                         <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={6}>
                                 <DatePicker
                                     label="Desde"
                                     value={desde}
                                     onChange={setDesde}
-                                    slotProps={{ textField: { fullWidth: true } }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? "small" : "medium"
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
@@ -196,14 +214,25 @@ const Facturacion = () => {
                                     label="Hasta"
                                     value={hasta}
                                     onChange={setHasta}
-                                    slotProps={{ textField: { fullWidth: true } }}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: isMobile ? "small" : "medium"
+                                        }
+                                    }}
                                 />
                             </Grid>
                         </Grid>
                     </Paper>
 
                     {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
+                        <Alert
+                            severity="error"
+                            sx={{
+                                mb: 2,
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                        >
                             {error}
                         </Alert>
                     )}
@@ -213,15 +242,15 @@ const Facturacion = () => {
                             <CircularProgress />
                         </Box>
                     ) : (
-                        <TableContainer component={Paper}>
-                            <Table>
+                        <TableContainer component={Paper} className="responsive-table-container">
+                            <Table size={isMobile ? "small" : "medium"}>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Negocio</TableCell>
-                                        <TableCell align="right">Total Facturas</TableCell>
-                                        <TableCell align="right">Pendiente</TableCell>
+                                        <TableCell align="right">Total</TableCell>
+                                        {!isMobile && <TableCell align="right">Pendiente</TableCell>}
                                         <TableCell align="right">Por Pagar</TableCell>
-                                        <TableCell align="right">Pagado</TableCell>
+                                        {!isTablet && <TableCell align="right">Pagado</TableCell>}
                                         <TableCell>Acciones</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -230,31 +259,48 @@ const Facturacion = () => {
                                         <TableRow key={row.negocio_id}>
                                             <TableCell>{row.negocio}</TableCell>
                                             <TableCell align="right">{row.total_facturas}</TableCell>
-                                            <TableCell align="right">{formatMoney(row.monto_pendiente)}</TableCell>
-                                            <TableCell align="right">{formatMoney(row.monto_aceptado)}</TableCell>
-                                            <TableCell align="right">{formatMoney(row.monto_pagado)}</TableCell>
+                                            {!isMobile && (
+                                                <TableCell align="right">
+                                                    {formatMoney(row.monto_pendiente)}
+                                                </TableCell>
+                                            )}
+                                            <TableCell align="right">
+                                                {formatMoney(row.monto_aceptado)}
+                                            </TableCell>
+                                            {!isTablet && (
+                                                <TableCell align="right">
+                                                    {formatMoney(row.monto_pagado)}
+                                                </TableCell>
+                                            )}
                                             <TableCell>
-                                                <Tooltip title="Ver Detalles">
-                                                    <IconButton onClick={() => verDetalles(row.negocio_id)}>
-                                                        <VisibilityIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Aceptar Pendientes">
-                                                    <IconButton 
-                                                        onClick={() => handleAceptar(row.facturas[0]?.factura_id)}
-                                                        disabled={!row.monto_pendiente}
-                                                    >
-                                                        <CheckCircleIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Marcar como Pagado">
-                                                    <IconButton 
-                                                        onClick={() => handlePagar(row.facturas[0]?.factura_id)}
-                                                        disabled={!row.monto_aceptado}
-                                                    >
-                                                        <PaidIcon />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="Ver Detalles">
+                                                        <IconButton
+                                                            onClick={() => verDetalles(row.negocio_id)}
+                                                            size={isMobile ? "small" : "medium"}
+                                                        >
+                                                            <VisibilityIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Aceptar Pendientes">
+                                                        <IconButton
+                                                            onClick={() => handleAceptar(row.facturas[0]?.factura_id)}
+                                                            disabled={!row.monto_pendiente}
+                                                            size={isMobile ? "small" : "medium"}
+                                                        >
+                                                            <CheckCircleIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Marcar como Pagado">
+                                                        <IconButton
+                                                            onClick={() => handlePagar(row.facturas[0]?.factura_id)}
+                                                            disabled={!row.monto_aceptado}
+                                                            size={isMobile ? "small" : "medium"}
+                                                        >
+                                                            <PaidIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -264,25 +310,24 @@ const Facturacion = () => {
                     )}
 
                     {/* Dialog para ver detalles */}
-                    <Dialog 
-                        open={openDialog} 
+                    <Dialog
+                        open={openDialog}
                         onClose={() => setOpenDialog(false)}
                         maxWidth="md"
                         fullWidth
+                        fullScreen={isMobile}
                     >
-                        <DialogTitle>
+                        <DialogTitle sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                             Detalles de Facturación - {selectedFactura?.negocio}
                         </DialogTitle>
                         <DialogContent>
                             {selectedFactura && (
                                 <TableContainer>
-                                    <Table>
+                                    <Table size={isMobile ? "small" : "medium"}>
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>ID</TableCell>
-                                                <TableCell>Fecha Emisión</TableCell>
-                                                <TableCell>Fecha Aceptación</TableCell>
-                                                <TableCell>Fecha Pago</TableCell>
+                                                {!isMobile && <TableCell>Fecha Emisión</TableCell>}
                                                 <TableCell>Estado</TableCell>
                                                 <TableCell align="right">Monto</TableCell>
                                                 <TableCell>Acciones</TableCell>
@@ -292,77 +337,45 @@ const Facturacion = () => {
                                             {selectedFactura.facturas.map((factura) => (
                                                 <TableRow key={factura.factura_id}>
                                                     <TableCell>{factura.factura_id}</TableCell>
+                                                    {!isMobile && (
+                                                        <TableCell>
+                                                            {formatDate(factura.fecha_emision)}
+                                                        </TableCell>
+                                                    )}
                                                     <TableCell>
-                                                        <Tooltip title={`Creada: ${formatDate(factura.fecha_emision)}`}>
-                                                            <span>{formatDate(factura.fecha_emision)}</span>
-                                                        </Tooltip>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Tooltip title={factura.fecha_aceptacion ? 
-                                                            `Aceptada: ${formatDate(factura.fecha_aceptacion)}` : 
-                                                            'Pendiente de aceptación'}>
-                                                            <span>
-                                                                {factura.fecha_aceptacion ? 
-                                                                    formatDate(factura.fecha_aceptacion) : 
-                                                                    '-'}
-                                                            </span>
-                                                        </Tooltip>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Tooltip title={factura.fecha_pago ? 
-                                                            `Pagada: ${formatDate(factura.fecha_pago)}` : 
-                                                            'Pendiente de pago'}>
-                                                            <span>
-                                                                {factura.fecha_pago ? 
-                                                                    formatDate(factura.fecha_pago) : 
-                                                                    '-'}
-                                                            </span>
-                                                        </Tooltip>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Tooltip title={
-                                                            factura.estado === 'pagada' ? 
-                                                                `Creada: ${formatDate(factura.fecha_emision)}
-                                                                 Aceptada: ${formatDate(factura.fecha_aceptacion)}
-                                                                 Pagada: ${formatDate(factura.fecha_pago)}` :
-                                                            factura.estado === 'aceptada' ? 
-                                                                `Creada: ${formatDate(factura.fecha_emision)}
-                                                                 Aceptada: ${formatDate(factura.fecha_aceptacion)}` :
-                                                                `Creada: ${formatDate(factura.fecha_emision)}`
-                                                        }>
-                                                            <Chip 
-                                                                label={factura.estado.toUpperCase()}
-                                                                color={
-                                                                    factura.estado === 'pagada' ? 'success' :
+                                                        <Chip
+                                                            label={factura.estado.toUpperCase()}
+                                                            color={
+                                                                factura.estado === 'pagada' ? 'success' :
                                                                     factura.estado === 'aceptada' ? 'info' : 'warning'
-                                                                }
-                                                            />
-                                                        </Tooltip>
+                                                            }
+                                                            size={isMobile ? "small" : "medium"}
+                                                        />
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         {formatMoney(factura.monto_total)}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Tooltip title={
-                                                            factura.estado === 'pendiente' ? 'Aceptar factura' :
-                                                            factura.estado === 'aceptada' ? 'Marcar como pagada' : 
-                                                            `Pagada el ${formatDate(factura.fecha_pago)}`
-                                                        }>
-                                                            <span>
-                                                                <IconButton 
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Tooltip title="Aceptar">
+                                                                <IconButton
                                                                     onClick={() => handleAceptar(factura.factura_id)}
                                                                     disabled={factura.estado !== 'pendiente'}
+                                                                    size={isMobile ? "small" : "medium"}
                                                                 >
                                                                     <CheckCircleIcon />
                                                                 </IconButton>
-                                                                <IconButton 
+                                                            </Tooltip>
+                                                            <Tooltip title="Marcar Pagada">
+                                                                <IconButton
                                                                     onClick={() => handlePagar(factura.factura_id)}
                                                                     disabled={factura.estado !== 'aceptada'}
+                                                                    size={isMobile ? "small" : "medium"}
                                                                 >
                                                                     <PaidIcon />
                                                                 </IconButton>
-                                                            </span>
-                                                        </Tooltip>
+                                                            </Tooltip>
+                                                        </Box>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -371,14 +384,35 @@ const Facturacion = () => {
                                 </TableContainer>
                             )}
                         </DialogContent>
-                        <DialogActions>
-                            <Button onClick={() => setOpenDialog(false)}>Cerrar</Button>
+                        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+                            <Button
+                                onClick={() => setOpenDialog(false)}
+                                size={isMobile ? "small" : "medium"}
+                            >
+                                Cerrar
+                            </Button>
                         </DialogActions>
                     </Dialog>
+
+                    {/* Snackbar para mensajes */}
+                    <Alert
+                        open={snackbar.open}
+                        autoHideDuration={6000}
+                        onClose={() => setSnackbar({ ...snackbar, open: false })}
+                        severity={snackbar.severity}
+                        sx={{
+                            position: 'fixed',
+                            bottom: { xs: 16, sm: 24 },
+                            right: { xs: 16, sm: 24 },
+                            zIndex: 2000
+                        }}
+                    >
+                        {snackbar.message}
+                    </Alert>
                 </Box>
             </Container>
         </LocalizationProvider>
     );
 };
 
-export default Facturacion; 
+export default Facturacion;
