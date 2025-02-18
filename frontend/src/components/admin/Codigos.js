@@ -23,7 +23,9 @@ import {
     InputAdornment,
     Container,
     CircularProgress,
-    Tooltip
+    Tooltip,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import QrCodeIcon from '@mui/icons-material/QrCode';
@@ -44,7 +46,7 @@ const Codigos = () => {
     const [openQRDialog, setOpenQRDialog] = useState(false);
     const [selectedQR, setSelectedQR] = useState('');
     const [error, setError] = useState(null);
-    
+
     // Estados para filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedNegocio, setSelectedNegocio] = useState('');
@@ -62,12 +64,16 @@ const Codigos = () => {
     const [loadingNegocios, setLoadingNegocios] = useState(false);
     const [creatingCode, setCreatingCode] = useState(false);
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
     const filterCodigos = useCallback(() => {
         let filtered = [...codigos];
 
         // Filtrar por término de búsqueda
         if (searchTerm) {
-            filtered = filtered.filter(codigo => 
+            filtered = filtered.filter(codigo =>
                 codigo.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 codigo.email?.toLowerCase().includes(searchTerm.toLowerCase())
             );
@@ -75,26 +81,26 @@ const Codigos = () => {
 
         // Filtrar por negocio
         if (selectedNegocio) {
-            filtered = filtered.filter(codigo => 
+            filtered = filtered.filter(codigo =>
                 codigo.negocio_id === parseInt(selectedNegocio)
             );
         }
 
         // Filtrar por estado
         if (selectedEstado !== '') {
-            filtered = filtered.filter(codigo => 
+            filtered = filtered.filter(codigo =>
                 codigo.estado === (selectedEstado === 'true')
             );
         }
 
         // Filtrar por fecha de creación
         if (fechaDesde) {
-            filtered = filtered.filter(codigo => 
+            filtered = filtered.filter(codigo =>
                 new Date(codigo.fecha_creacion || codigo.created_at) >= fechaDesde
             );
         }
         if (fechaHasta) {
-            filtered = filtered.filter(codigo => 
+            filtered = filtered.filter(codigo =>
                 new Date(codigo.fecha_creacion || codigo.created_at) <= fechaHasta
             );
         }
@@ -152,7 +158,7 @@ const Codigos = () => {
             setError('Por favor complete todos los campos requeridos');
             return;
         }
-        
+
         if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
             setError('Por favor ingrese un email válido');
             return;
@@ -166,7 +172,7 @@ const Codigos = () => {
                 negocio_id: formData.negocio_id ? parseInt(formData.negocio_id) : null,
                 email: formData.email.trim()
             };
-            
+
             const response = await clienteAxios.post('/codigos', dataToSend);
             setOpenDialog(false);
             await obtenerCodigos();
@@ -213,21 +219,21 @@ const Codigos = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Sin fecha';
-        
+
         // Convertir el formato DD/MM/YYYY HH24:MI a formato ISO
         if (dateString.includes('/')) {
             const [date, time] = dateString.split(' ');
             const [day, month, year] = date.split('/');
             dateString = `${year}-${month}-${day}T${time}:00`;
         }
-        
+
         const date = new Date(dateString);
-        
+
         if (isNaN(date.getTime())) {
             console.error('Fecha inválida:', dateString);
             return 'Fecha inválida';
         }
-        
+
         try {
             return date.toLocaleString('es-ES', {
                 year: 'numeric',
@@ -250,31 +256,53 @@ const Codigos = () => {
                         Gestión de Códigos
                     </Typography>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                        <Typography variant="h5">Códigos de Descuento</Typography>
-                        <Tooltip title="Crear nuevo código de descuento">
-                            <Button 
-                                variant="contained" 
-                                onClick={() => setOpenDialog(true)}
-                            >
-                                Nuevo Código
-                            </Button>
-                        </Tooltip>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        justifyContent: 'space-between',
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        mb: 3,
+                        gap: 2
+                    }}>
+                        <Typography
+                            variant="h5"
+                            sx={{
+                                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                                textAlign: { xs: 'center', sm: 'left' }
+                            }}
+                        >
+                            Gestión de Códigos
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            onClick={() => setOpenDialog(true)}
+                            fullWidth={isMobile}
+                            sx={{
+                                minWidth: { xs: '100%', sm: 'auto' }
+                            }}
+                        >
+                            Nuevo Código
+                        </Button>
                     </Box>
 
                     {/* Sección de filtros */}
-                    <Paper sx={{ p: 2, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            <FilterListIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    <Paper sx={{ p: { xs: 1, sm: 2 }, mb: 3 }} className="responsive-table-container">
+                        <Typography variant="h6" gutterBottom sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: { xs: '1rem', sm: '1.25rem' }
+                        }}>
+                            <FilterListIcon sx={{ mr: 1 }} />
                             Filtros
                         </Typography>
-                        <Grid container spacing={2} alignItems="center">
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6} md={3}>
                                 <TextField
                                     fullWidth
                                     label="Buscar"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    size={isMobile ? "small" : "medium"}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -291,6 +319,7 @@ const Codigos = () => {
                                     label="Negocio"
                                     value={selectedNegocio}
                                     onChange={(e) => setSelectedNegocio(e.target.value)}
+                                    size={isMobile ? "small" : "medium"}
                                 >
                                     <MenuItem value="">Todos</MenuItem>
                                     {negocios.map((negocio) => (
@@ -300,41 +329,59 @@ const Codigos = () => {
                                     ))}
                                 </TextField>
                             </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
+                            <Grid item xs={12} sm={6} md={3}>
                                 <TextField
                                     fullWidth
                                     select
                                     label="Estado"
                                     value={selectedEstado}
                                     onChange={(e) => setSelectedEstado(e.target.value)}
+                                    size={isMobile ? "small" : "medium"}
                                 >
                                     <MenuItem value="">Todos</MenuItem>
                                     <MenuItem value="true">Activo</MenuItem>
                                     <MenuItem value="false">Canjeado</MenuItem>
                                 </TextField>
                             </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <DateTimePicker
-                                    label="Desde"
-                                    value={fechaDesde}
-                                    onChange={setFechaDesde}
-                                    slotProps={{ textField: { fullWidth: true } }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <DateTimePicker
-                                    label="Hasta"
-                                    value={fechaHasta}
-                                    onChange={setFechaHasta}
-                                    slotProps={{ textField: { fullWidth: true } }}
-                                />
-                            </Grid>
+                            {!isMobile && (
+                                <>
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <DateTimePicker
+                                            label="Desde"
+                                            value={fechaDesde}
+                                            onChange={setFechaDesde}
+                                            slotProps={{
+                                                textField: {
+                                                    fullWidth: true,
+                                                    size: isMobile ? "small" : "medium"
+                                                }
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <DateTimePicker
+                                            label="Hasta"
+                                            value={fechaHasta}
+                                            onChange={setFechaHasta}
+                                            slotProps={{
+                                                textField: {
+                                                    fullWidth: true,
+                                                    size: isMobile ? "small" : "medium"
+                                                }
+                                            }}
+                                        />
+                                    </Grid>
+                                </>
+                            )}
                             <Grid item xs={12}>
-                                <Tooltip title="Limpiar todos los filtros">
-                                    <Button onClick={resetFilters} variant="outlined">
-                                        Limpiar Filtros
-                                    </Button>
-                                </Tooltip>
+                                <Button
+                                    onClick={resetFilters}
+                                    variant="outlined"
+                                    fullWidth={isMobile}
+                                    size={isMobile ? "small" : "medium"}
+                                >
+                                    Limpiar Filtros
+                                </Button>
                             </Grid>
                         </Grid>
                     </Paper>
@@ -361,16 +408,16 @@ const Codigos = () => {
                             </Typography>
                         </Paper>
                     ) : (
-                        <TableContainer component={Paper}>
-                            <Table>
+                        <TableContainer component={Paper} className="responsive-table-container">
+                            <Table size={isMobile ? "small" : "medium"}>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Código</TableCell>
-                                        <TableCell>Email</TableCell>
+                                        {!isMobile && <TableCell>Email</TableCell>}
                                         <TableCell>Negocio</TableCell>
-                                        <TableCell>Expira</TableCell>
+                                        {!isTablet && <TableCell>Fecha Fin</TableCell>}
                                         <TableCell>Estado</TableCell>
-                                        <TableCell>Creado</TableCell>
+                                        {!isMobile && <TableCell>Creación</TableCell>}
                                         <TableCell>Acciones</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -378,33 +425,38 @@ const Codigos = () => {
                                     {filteredCodigos.map((codigo) => (
                                         <TableRow key={codigo.id}>
                                             <TableCell>{codigo.codigo}</TableCell>
-                                            <TableCell>{codigo.email}</TableCell>
+                                            {!isMobile && <TableCell>{codigo.email}</TableCell>}
                                             <TableCell>{codigo.negocio_nombre}</TableCell>
-                                            <TableCell>{formatDate(codigo.fecha_fin)}</TableCell>
+                                            {!isTablet && <TableCell>{formatDate(codigo.fecha_fin)}</TableCell>}
                                             <TableCell>
-                                                <Chip 
+                                                <Chip
                                                     label={codigo.estado ? "Activo" : "Usado"}
                                                     color={codigo.estado ? "success" : "default"}
+                                                    size={isMobile ? "small" : "medium"}
                                                 />
                                             </TableCell>
-                                            <TableCell>{formatDate(codigo.fecha_creacion)}</TableCell>
+                                            {!isMobile && <TableCell>{formatDate(codigo.fecha_creacion)}</TableCell>}
                                             <TableCell>
-                                                <Tooltip title="Ver QR">
-                                                    <IconButton 
-                                                        onClick={() => handleShowQR(codigo.codigo_qr)}
-                                                        color="primary"
-                                                    >
-                                                        <QrCodeIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Ver Canjes">
-                                                    <IconButton 
-                                                        color="secondary"
-                                                        onClick={() => window.location.href = `/admin/codigos/${codigo.id}/canjes`}
-                                                    >
-                                                        <VisibilityIcon />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="Ver QR">
+                                                        <IconButton
+                                                            onClick={() => handleShowQR(codigo.codigo_qr)}
+                                                            color="primary"
+                                                            size={isMobile ? "small" : "medium"}
+                                                        >
+                                                            <QrCodeIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Ver Canjes">
+                                                        <IconButton
+                                                            color="secondary"
+                                                            onClick={() => window.location.href = `/admin/codigos/${codigo.id}/canjes`}
+                                                            size={isMobile ? "small" : "medium"}
+                                                        >
+                                                            <VisibilityIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -414,8 +466,16 @@ const Codigos = () => {
                     )}
 
                     {/* Dialog para crear nuevo código */}
-                    <Dialog open={openDialog} onClose={handleCloseDialog}>
-                        <DialogTitle>Nuevo Código de Descuento</DialogTitle>
+                    <Dialog
+                        open={openDialog}
+                        onClose={handleCloseDialog}
+                        fullScreen={isMobile}
+                        maxWidth="sm"
+                        fullWidth
+                    >
+                        <DialogTitle sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                            Nuevo Código de Descuento
+                        </DialogTitle>
                         <DialogContent>
                             <Box component="form" sx={{ mt: 2 }}>
                                 <TextField
@@ -427,6 +487,7 @@ const Codigos = () => {
                                     onChange={handleChange}
                                     margin="normal"
                                     required
+                                    size={isMobile ? "small" : "medium"}
                                 />
                                 <TextField
                                     fullWidth
@@ -436,6 +497,7 @@ const Codigos = () => {
                                     value={formData.negocio_id}
                                     onChange={handleChange}
                                     margin="normal"
+                                    size={isMobile ? "small" : "medium"}
                                 >
                                     <MenuItem value="">Todos los negocios</MenuItem>
                                     {negocios.map((negocio) => (
@@ -453,22 +515,24 @@ const Codigos = () => {
                                             fecha_expiracion: newValue
                                         }));
                                     }}
-                                    slotProps={{ 
-                                        textField: { 
+                                    slotProps={{
+                                        textField: {
                                             fullWidth: true,
-                                            margin: "normal"
-                                        } 
+                                            margin: "normal",
+                                            size: isMobile ? "small" : "medium"
+                                        }
                                     }}
                                 />
                             </Box>
                         </DialogContent>
-                        <DialogActions>
-                            <Button onClick={handleCloseDialog}>
+                        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+                            <Button onClick={handleCloseDialog} size={isMobile ? "small" : "medium"}>
                                 Cancelar
                             </Button>
-                            <Button 
-                                onClick={handleSubmit} 
+                            <Button
+                                onClick={handleSubmit}
                                 variant="contained"
+                                size={isMobile ? "small" : "medium"}
                                 disabled={creatingCode}
                             >
                                 {creatingCode ? 'Creando...' : 'Crear'}
@@ -477,15 +541,31 @@ const Codigos = () => {
                     </Dialog>
 
                     {/* Dialog para mostrar QR */}
-                    <Dialog open={openQRDialog} onClose={() => setOpenQRDialog(false)}>
-                        <DialogTitle>Código QR</DialogTitle>
-                        <DialogContent>
-                            <Box sx={{ textAlign: 'center', p: 2 }}>
-                                <img src={selectedQR} alt="Código QR" style={{ maxWidth: '100%' }} />
-                            </Box>
+                    <Dialog
+                        open={openQRDialog}
+                        onClose={() => setOpenQRDialog(false)}
+                        maxWidth="xs"
+                        fullWidth
+                    >
+                        <DialogTitle sx={{ textAlign: 'center' }}>
+                            Código QR
+                        </DialogTitle>
+                        <DialogContent sx={{ textAlign: 'center' }}>
+                            {selectedQR && (
+                                <Box
+                                    component="img"
+                                    src={selectedQR}
+                                    alt="QR Code"
+                                    sx={{
+                                        width: '100%',
+                                        maxWidth: '250px',
+                                        height: 'auto'
+                                    }}
+                                />
+                            )}
                         </DialogContent>
                         <DialogActions>
-                            <Button 
+                            <Button
                                 onClick={() => {
                                     const link = document.createElement('a');
                                     link.href = selectedQR;
@@ -509,4 +589,4 @@ const Codigos = () => {
     );
 };
 
-export default Codigos; 
+export default Codigos;

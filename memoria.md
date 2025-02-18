@@ -637,3 +637,31 @@ Estos cambios mejoran la gestión de emails en el sistema, permitiendo una clara
    - Búsqueda más completa incluyendo ID
    - Visualización más clara de la información
    - Mejor capacidad de seguimiento
+
+# Memoria del Proyecto
+
+## Mejoras de Responsividad - [Fecha actual]
+
+Se han implementado mejoras significativas en la responsividad de la aplicación para garantizar una mejor experiencia de usuario en todos los dispositivos:
+
+### Mejoras Globales
+- Implementación de estilos base responsivos en index.css
+- Optimización del sistema de grid y contenedores
+- Ajustes automáticos de tamaños de fuente y espaciado según el dispositivo
+- Mejor manejo de tablas en dispositivos móviles
+
+### Layouts
+- Mejora en AdminLayout y BusinessLayout para mejor adaptación móvil
+- Optimización del drawer lateral para dispositivos móviles
+- Ajuste dinámico de la barra de navegación
+
+### Componentes Específicos
+- BusinessDashboard: Mejor disposición de tarjetas en móvil
+- Códigos: Tabla responsiva con columnas adaptativas
+- ValidarCodigo: Optimización para uso móvil del escáner QR
+
+### Beneficios
+- Mejor experiencia de usuario en dispositivos móviles y tablets
+- Mayor accesibilidad y usabilidad
+- Rendimiento optimizado en diferentes dispositivos
+- Interfaz más coherente y adaptativa

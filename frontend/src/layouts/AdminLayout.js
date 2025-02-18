@@ -11,7 +11,9 @@ import {
     IconButton,
     ListItem,
     ListItemIcon,
-    ListItemText
+    ListItemText,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import StoreIcon from '@mui/icons-material/Store';
@@ -57,6 +59,8 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -70,28 +74,57 @@ const AdminLayout = ({ children }) => {
     const drawer = (
         <div>
             <Toolbar>
-                <Typography variant="h6" noWrap component="div">
+                <Typography
+                    variant="h6"
+                    noWrap
+                    component="div"
+                    sx={{
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                    }}
+                >
                     Panel Admin
                 </Typography>
             </Toolbar>
             <Divider />
             <List>
                 {menuItems.map((item) => (
-                    <ListItem 
-                        button 
-                        key={item.text} 
-                        component={Link} 
+                    <ListItem
+                        button
+                        key={item.text}
+                        component={Link}
                         to={item.path}
                         selected={location.pathname === item.path}
+                        sx={{
+                            py: { xs: 1, sm: 1.5 },
+                            '& .MuiListItemIcon-root': {
+                                minWidth: { xs: 40, sm: 48 }
+                            }
+                        }}
                     >
                         <ListItemIcon>{item.icon}</ListItemIcon>
-                        <ListItemText primary={item.text} />
+                        <ListItemText
+                            primary={item.text}
+                            primaryTypographyProps={{
+                                fontSize: { xs: '0.9rem', sm: '1rem' }
+                            }}
+                        />
                     </ListItem>
                 ))}
                 <Divider />
-                <ListItem button onClick={handleLogout}>
+                <ListItem
+                    button
+                    onClick={handleLogout}
+                    sx={{
+                        py: { xs: 1, sm: 1.5 }
+                    }}
+                >
                     <ListItemIcon><LogoutIcon /></ListItemIcon>
-                    <ListItemText primary="Cerrar Sesión" />
+                    <ListItemText
+                        primary="Cerrar Sesión"
+                        primaryTypographyProps={{
+                            fontSize: { xs: '0.9rem', sm: '1rem' }
+                        }}
+                    />
                 </ListItem>
             </List>
         </div>
@@ -101,7 +134,13 @@ const AdminLayout = ({ children }) => {
         <Box sx={{ display: 'flex' }}>
             <AppBar
                 position="fixed"
-                sx={{ width: { sm: `calc(100% - ${drawerWidth}px)` }, ml: { sm: `${drawerWidth}px` } }}
+                sx={{
+                    width: { sm: `calc(100% - ${drawerWidth}px)` },
+                    ml: { sm: `${drawerWidth}px` },
+                    '& .MuiToolbar-root': {
+                        minHeight: { xs: 56, sm: 64 }
+                    }
+                }}
             >
                 <Toolbar>
                     <IconButton
@@ -109,18 +148,32 @@ const AdminLayout = ({ children }) => {
                         aria-label="open drawer"
                         edge="start"
                         onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        sx={{
+                            mr: 2,
+                            display: { sm: 'none' },
+                            padding: { xs: 0.5, sm: 1 }
+                        }}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div">
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        component="div"
+                        sx={{
+                            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                        }}
+                    >
                         Sistema de Descuentos
                     </Typography>
                 </Toolbar>
             </AppBar>
             <Box
                 component="nav"
-                sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+                sx={{
+                    width: { sm: drawerWidth },
+                    flexShrink: { sm: 0 }
+                }}
             >
                 <Drawer
                     variant="temporary"
@@ -131,7 +184,11 @@ const AdminLayout = ({ children }) => {
                     }}
                     sx={{
                         display: { xs: 'block', sm: 'none' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: drawerWidth,
+                            width: { xs: '80%', sm: drawerWidth }
+                        },
                     }}
                 >
                     {drawer}
@@ -140,7 +197,10 @@ const AdminLayout = ({ children }) => {
                     variant="permanent"
                     sx={{
                         display: { xs: 'none', sm: 'block' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        '& .MuiDrawer-paper': {
+                            boxSizing: 'border-box',
+                            width: drawerWidth
+                        },
                     }}
                     open
                 >
@@ -149,18 +209,18 @@ const AdminLayout = ({ children }) => {
             </Box>
             <Box
                 component="main"
-                sx={{ 
-                    flexGrow: 1, 
-                    p: 3, 
+                sx={{
+                    flexGrow: 1,
+                    p: { xs: 2, sm: 3 },
                     width: { sm: `calc(100% - ${drawerWidth}px)` },
-                    minHeight: '100vh'
+                    minHeight: '100vh',
+                    mt: { xs: '56px', sm: '64px' }
                 }}
             >
-                <Toolbar />
                 {children}
             </Box>
         </Box>
     );
 };
 
-export default AdminLayout; 
+export default AdminLayout;

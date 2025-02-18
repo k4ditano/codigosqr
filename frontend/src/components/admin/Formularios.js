@@ -158,7 +158,7 @@ const Formularios = () => {
     };
 
     return (
-        <Box>
+        <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
             <Typography variant="h5" gutterBottom>
                 Formularios Pendientes
             </Typography>

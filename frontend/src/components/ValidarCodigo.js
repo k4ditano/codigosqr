@@ -1,149 +1,133 @@
 import React, { useState } from 'react';
 import {
     Box,
-    Button,
-    TextField,
-    Typography,
-    Paper,
     Container,
+    Paper,
+    Typography,
+    TextField,
+    Button,
     Alert,
-    Grid
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
-import QrScanner from 'react-qr-scanner';
+import QrReader from 'react-qr-reader';
 import clienteAxios from '../config/axios';
 
 const ValidarCodigo = () => {
     const [codigo, setCodigo] = useState('');
+    const [escaneando, setEscaneando] = useState(false);
     const [mensaje, setMensaje] = useState(null);
     const [error, setError] = useState(null);
-    const [escaneando, setEscaneando] = useState(false);
-    const [camaraDisponible, setCamaraDisponible] = useState(true);
 
-    const validarCodigo = async (codigoAValidar) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const handleScan = async (data) => {
+        if (data) {
+            setEscaneando(false);
+            setCodigo(data);
+            await validarCodigo(data);
+        }
+    };
+
+    const handleError = (err) => {
+        console.error(err);
+        setError('Error al acceder a la cámara');
+        setEscaneando(false);
+    };
+
+    const validarCodigo = async (codigoValidar) => {
         try {
-            setError(null);
-            setMensaje(null);
-
-            if (!codigoAValidar) {
-                setError('Por favor ingrese un código');
-                return;
-            }
-
-            const response = await clienteAxios.post('/codigos/validar', {
-                codigo: codigoAValidar
+            const { data } = await clienteAxios.post('/api/codigos/validar', {
+                codigo: codigoValidar
             });
-
-            setMensaje({
-                tipo: 'success',
-                texto: `¡Código validado! Descuento del ${response.data.descuento}%`
-            });
+            setMensaje(data);
             setCodigo('');
+            setTimeout(() => setMensaje(null), 3000);
         } catch (error) {
-            console.error('Error al validar código:', error);
-            setError(error.response?.data?.error || 'Error al validar el código');
+            setError(error.response?.data?.msg || 'Error al validar el código');
+            setTimeout(() => setError(null), 3000);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!codigo) {
-            setError('Por favor ingrese un código');
+            setError('Ingresa un código');
             return;
         }
         await validarCodigo(codigo);
     };
 
-    const handleScan = async (data) => {
-        if (data && data.text) {
-            try {
-                // Extraer el código del QR
-                const codigo = data.text.split('/').pop();
-                await validarCodigo(codigo);
-                setEscaneando(false);
-            } catch (error) {
-                console.error('Error al procesar QR:', error);
-                setError('Error al procesar el código QR');
-            }
-        }
-    };
-
-    const handleError = (err) => {
-        console.error('Error al escanear:', err);
-        if (err.name === 'NotAllowedError') {
-            setError('No se ha dado permiso para acceder a la cámara');
-            setCamaraDisponible(false);
-        } else if (err.name === 'NotFoundError') {
-            setError('No se encontró ninguna cámara disponible');
-            setCamaraDisponible(false);
-        } else {
-            setError('Error al acceder a la cámara');
-        }
-        setEscaneando(false);
-    };
-
-    const iniciarEscaneo = async () => {
-        setError(null);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            stream.getTracks().forEach(track => track.stop());
-            setEscaneando(true);
-            setCamaraDisponible(true);
-        } catch (err) {
-            handleError(err);
-        }
-    };
-
     return (
-        <Container maxWidth="sm">
-            <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
-                <Typography variant="h5" component="h2" gutterBottom>
-                    Validar Código de Descuento
+        <Container maxWidth="sm" sx={{ py: { xs: 2, sm: 4 } }}>
+            <Paper
+                elevation={3}
+                sx={{
+                    p: { xs: 2, sm: 3 },
+                    borderRadius: { xs: 1, sm: 2 }
+                }}
+            >
+                <Typography
+                    variant="h5"
+                    gutterBottom
+                    sx={{
+                        textAlign: 'center',
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                        mb: { xs: 2, sm: 3 }
+                    }}
+                >
+                    Validar Código
                 </Typography>
 
                 {!escaneando ? (
-                    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit}
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: { xs: 2, sm: 3 }
+                        }}
+                    >
                         <TextField
                             fullWidth
-                            label="Código de descuento"
+                            label="Código"
                             value={codigo}
                             onChange={(e) => setCodigo(e.target.value)}
-                            margin="normal"
+                            size={isMobile ? "small" : "medium"}
+                            sx={{ mb: 1 }}
                         />
-                        <Grid container spacing={2} sx={{ mt: 2 }}>
-                            <Grid item xs={6}>
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    type="submit"
-                                >
-                                    Validar Código
-                                </Button>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    onClick={iniciarEscaneo}
-                                    disabled={!camaraDisponible}
-                                >
-                                    Escanear QR
-                                </Button>
-                            </Grid>
-                        </Grid>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            type="submit"
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Validar
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={() => setEscaneando(true)}
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Escanear QR
+                        </Button>
                     </Box>
                 ) : (
-                    <Box sx={{ mt: 2 }}>
-                        <QrScanner
+                    <Box sx={{ width: '100%' }}>
+                        <QrReader
                             delay={300}
                             onError={handleError}
                             onScan={handleScan}
                             style={{ width: '100%' }}
                             constraints={{
                                 audio: false,
-                                video: { 
+                                video: {
                                     facingMode: "environment",
-                                    width: { ideal: 1280 },
-                                    height: { ideal: 720 }
+                                    width: { ideal: isMobile ? 720 : 1280 },
+                                    height: { ideal: isMobile ? 480 : 720 }
                                 }
                             }}
                         />
@@ -152,6 +136,7 @@ const ValidarCodigo = () => {
                             variant="outlined"
                             onClick={() => setEscaneando(false)}
                             sx={{ mt: 2 }}
+                            size={isMobile ? "small" : "medium"}
                         >
                             Cancelar Escaneo
                         </Button>
@@ -159,13 +144,25 @@ const ValidarCodigo = () => {
                 )}
 
                 {mensaje && (
-                    <Alert severity="success" sx={{ mt: 2 }}>
+                    <Alert
+                        severity="success"
+                        sx={{
+                            mt: 2,
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                    >
                         {mensaje.texto}
                     </Alert>
                 )}
 
                 {error && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
+                    <Alert
+                        severity="error"
+                        sx={{
+                            mt: 2,
+                            fontSize: { xs: '0.875rem', sm: '1rem' }
+                        }}
+                    >
                         {error}
                     </Alert>
                 )}
@@ -174,4 +171,4 @@ const ValidarCodigo = () => {
     );
 };
 
-export default ValidarCodigo; 
+export default ValidarCodigo;
