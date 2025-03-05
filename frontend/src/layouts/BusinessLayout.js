@@ -82,7 +82,7 @@ const BusinessLayout = ({ children }) => {
                         fontSize: { xs: '1.1rem', sm: '1.25rem' }
                     }}
                 >
-                    Panel Negocio
+                    Panel colaboradores TARSIS
                 </Typography>
             </Toolbar>
             <Divider />

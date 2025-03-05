@@ -82,7 +82,7 @@ const AdminLayout = ({ children }) => {
                         fontSize: { xs: '1.1rem', sm: '1.25rem' }
                     }}
                 >
-                    Panel Admin
+                    Panel colaboradores TARSIS
                 </Typography>
             </Toolbar>
             <Divider />
