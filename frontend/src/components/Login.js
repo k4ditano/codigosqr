@@ -8,7 +8,7 @@ import {
     Typography,
     Alert,
     CircularProgress
-} from '@mui.material';
+} from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
