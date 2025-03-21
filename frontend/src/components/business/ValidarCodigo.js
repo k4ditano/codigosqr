@@ -12,7 +12,6 @@ import {
     DialogActions
 } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { QrReader } from 'react-qr-reader';
 import axiosClient from '../../config/axios';
 
 const ValidarCodigo = () => {
@@ -38,23 +37,8 @@ const ValidarCodigo = () => {
         }
     };
 
-    const handleScan = (data) => {
-        if (data) {
-            try {
-                const qrData = JSON.parse(data);
-                if (qrData.type === 'discount' && qrData.code) {
-                    setOpenScanner(false);
-                    handleValidar(qrData.code);
-                }
-            } catch (error) {
-                setError('Código QR inválido');
-            }
-        }
-    };
-
-    const handleError = (err) => {
-        console.error(err);
-        setError('Error al escanear el código QR');
+    const handleOpenQRScanner = () => {
+        setError('La funcionalidad de escaneo QR está temporalmente deshabilitada en la versión de producción. Por favor, ingrese el código manualmente.');
     };
 
     return (
@@ -83,7 +67,7 @@ const ValidarCodigo = () => {
                 <Button
                     variant="outlined"
                     startIcon={<QrCodeScannerIcon />}
-                    onClick={() => setOpenScanner(true)}
+                    onClick={handleOpenQRScanner}
                     fullWidth
                 >
                     Escanear Código QR
@@ -111,18 +95,16 @@ const ValidarCodigo = () => {
                 maxWidth="sm"
                 fullWidth
             >
-                <DialogTitle>Escanear Código QR</DialogTitle>
+                <DialogTitle>Escaneo QR no disponible</DialogTitle>
                 <DialogContent>
-                    <QrReader
-                        onResult={handleScan}
-                        onError={handleError}
-                        constraints={{ facingMode: 'environment' }}
-                        style={{ width: '100%' }}
-                    />
+                    <Typography>
+                        La funcionalidad de escaneo QR está deshabilitada en la versión de producción por problemas de compatibilidad.
+                        Por favor, ingrese el código manualmente.
+                    </Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenScanner(false)}>
-                        Cancelar
+                        Aceptar
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -130,4 +112,4 @@ const ValidarCodigo = () => {
     );
 };
 
-export default ValidarCodigo; 
+export default ValidarCodigo;
