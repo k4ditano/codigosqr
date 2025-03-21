@@ -8,7 +8,7 @@ import {
     Typography,
     Alert,
     CircularProgress
-} from '@mui/material';
+} from '@mui.material';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -35,6 +35,11 @@ const Login = () => {
         setLoading(true);
 
         try {
+            console.log('Intentando login con:', {
+                ...formData,
+                password: '*****' // No mostrar la contraseña en logs
+            });
+            
             const user = await login(formData);
             console.log('Usuario autenticado:', user);
             
@@ -50,8 +55,12 @@ const Login = () => {
             if (error.userMessage) {
                 setError(error.userMessage);
             } else if (error.response) {
-                // Error del servidor con respuesta
-                setError(error.response.data?.error || 'Credenciales inválidas');
+                if (error.response.status === 502) {
+                    setError('El servidor API no está respondiendo. Por favor contacte al administrador o intente más tarde.');
+                } else {
+                    // Error del servidor con respuesta
+                    setError(error.response.data?.error || 'Credenciales inválidas');
+                }
             } else if (error.request) {
                 // No hubo respuesta del servidor
                 setError('No se pudo conectar con el servidor. Verifique su conexión o contacte al administrador.');
