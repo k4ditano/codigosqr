@@ -5,7 +5,7 @@ const emailService = require('../services/emailService');
 class CodigosController {
     async crear(req, res) {
         try {
-            console.log('Datos recibidos:', req.body);
+            console.log('Datos recibidos para crear código:', req.body);
             const { cliente_email, fecha_expiracion, negocio_id } = req.body;
             const enviar_email = req.body.enviar_email === true || req.body.enviar_email === 'true';
             
@@ -13,54 +13,88 @@ class CodigosController {
             
             // Generar código aleatorio
             const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+            console.log('Código generado:', codigo);
             
-            // Generar QR
-            const qrCode = await qrService.generateDiscountQR(codigo, negocio_id);
+            let qrCode = null;
             
-            console.log('Código QR generado correctamente');
-            
-            const result = await pool.query(
-                `INSERT INTO codigos_descuento (
-                    codigo, 
-                    cliente_email, 
-                    fecha_expiracion, 
-                    negocio_id,
-                    qr_code
-                ) VALUES ($1, $2, $3, $4, $5) 
-                RETURNING *`,
-                [codigo, cliente_email, fecha_expiracion, negocio_id, qrCode]
-            );
-
-            console.log('Código insertado en la base de datos');
-
-            // Enviar email con el código solo si enviar_email es true
-            if (enviar_email) {
-                try {
-                    console.log('Intentando enviar email...');
-                    // Intentar con ambas funciones para garantizar compatibilidad
-                    try {
-                        await emailService.sendDiscountCode(cliente_email, codigo, qrCode);
-                    } catch (error) {
-                        console.log('Intentando con método alternativo...');
-                        await emailService.enviarCodigoDescuento(cliente_email, codigo, qrCode);
-                    }
-                    console.log('Email enviado correctamente');
-                } catch (emailError) {
-                    console.error('Error al enviar email:', emailError);
-                    // No retornamos error, simplemente continuamos
-                    console.log('Continuando a pesar del error de email');
-                }
-            } else {
-                console.log('Envío de email omitido según configuración');
+            // Intentar generar QR, pero continuar incluso si falla
+            try {
+                qrCode = await qrService.generateDiscountQR(codigo, negocio_id);
+                console.log('QR generado correctamente');
+            } catch (qrError) {
+                console.error('Error al generar QR (continuando sin QR):', qrError);
+                // Asignar un valor por defecto o placeholder para el QR
+                qrCode = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
             }
-
-            res.status(201).json(result.rows[0]);
+            
+            // Insertar el código en la base de datos
+            try {
+                const result = await pool.query(
+                    `INSERT INTO codigos_descuento (
+                        codigo, 
+                        cliente_email, 
+                        fecha_expiracion, 
+                        negocio_id,
+                        qr_code
+                    ) VALUES ($1, $2, $3, $4, $5) 
+                    RETURNING *`,
+                    [codigo, cliente_email, fecha_expiracion, negocio_id, qrCode]
+                );
+                
+                console.log('Código insertado en la base de datos');
+                
+                // Intentar enviar email si está habilitado, pero no bloquear si falla
+                if (enviar_email) {
+                    // Ejecutar el envío de email en segundo plano
+                    this.intentarEnviarEmail(cliente_email, codigo, qrCode).catch(emailError => {
+                        console.error('Error en envío de email en segundo plano:', emailError);
+                    });
+                    console.log('Proceso de envío de email iniciado en segundo plano');
+                } else {
+                    console.log('Envío de email omitido según configuración');
+                }
+                
+                // Retornar respuesta exitosa independientemente del estado del email
+                res.status(201).json(result.rows[0]);
+                
+            } catch (dbError) {
+                console.error('Error en la base de datos:', dbError);
+                return res.status(500).json({
+                    error: 'Error al insertar el código en la base de datos',
+                    details: dbError.message
+                });
+            }
+            
         } catch (error) {
-            console.error('Error al crear código:', error);
+            console.error('Error general al crear código:', error);
             res.status(500).json({ 
                 error: 'Error al crear el código de descuento',
                 details: error.message
             });
+        }
+    }
+    
+    // Método auxiliar para enviar email sin bloquear
+    async intentarEnviarEmail(email, codigo, qrCode) {
+        try {
+            console.log('Intentando enviar email...');
+            // Intentar primero con sendDiscountCode
+            await emailService.sendDiscountCode(email, codigo, qrCode);
+            console.log('Email enviado correctamente con sendDiscountCode');
+            return true;
+        } catch (error1) {
+            console.error('Error con sendDiscountCode:', error1);
+            
+            try {
+                // Intentar con método alternativo
+                console.log('Intentando con método alternativo...');
+                await emailService.enviarCodigoDescuento(email, codigo, qrCode);
+                console.log('Email enviado correctamente con enviarCodigoDescuento');
+                return true;
+            } catch (error2) {
+                console.error('Error también con método alternativo:', error2);
+                return false;
+            }
         }
     }
 

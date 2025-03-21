@@ -132,16 +132,27 @@ const Codigos = () => {
         e.preventDefault();
         setError(''); // Limpiar errores previos
         
-        // Asegurarse de que el valor de enviar_email es booleano
-        const dataToSend = {
-            ...formData,
-            enviar_email: formData.enviar_email === true || formData.enviar_email === 'true'
-        };
-        
         try {
-            console.log('Enviando datos:', dataToSend);
+            // Preparar los datos, asegurando el formato correcto
+            const dataToSend = {
+                cliente_email: formData.cliente_email?.trim(),
+                negocio_id: formData.negocio_id || null,
+                fecha_expiracion: formData.fecha_expiracion || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                enviar_email: formData.enviar_email === true || formData.enviar_email === 'true'
+            };
+            
+            console.log('Enviando datos formateados:', dataToSend);
+            
+            // Mostrar un mensaje temporal mientras se procesa
+            setError('Creando código, por favor espere...');
+            
             const response = await axiosClient.post('/codigos', dataToSend);
             console.log('Respuesta exitosa:', response.data);
+            
+            // Limpiar error (que está mostrando el mensaje de espera)
+            setError('');
+            
+            // Cerrar diálogo y reiniciar formulario
             setOpenDialog(false);
             cargarCodigos();
             setFormData({
@@ -151,20 +162,17 @@ const Codigos = () => {
                 enviar_email: true
             });
         } catch (error) {
-            console.error('Error al crear código:', error);
+            console.error('Error completo al crear código:', error);
+            
+            // Intentar obtener detalles precisos del error
             let errorMessage = 'Error al crear el código';
             
-            // Mostrar mensaje de error detallado del servidor si está disponible
             if (error.response?.data?.details) {
-                if (error.response.data.details.includes('emailService')) {
-                    errorMessage = 'Error en el servicio de correo. Intenta crear el código sin enviar email.';
-                } else {
-                    errorMessage += `: ${error.response.data.details}`;
-                }
-            } else if (error.response?.data?.message) {
-                errorMessage += `: ${error.response.data.message}`;
+                errorMessage += `: ${error.response.data.details}`;
             } else if (error.response?.data?.error) {
                 errorMessage += `: ${error.response.data.error}`;
+            } else if (error.message) {
+                errorMessage += `: ${error.message}`;
             }
             
             setError(errorMessage);
