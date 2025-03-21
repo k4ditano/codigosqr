@@ -48,7 +48,8 @@ const Codigos = () => {
     const [formData, setFormData] = useState({
         cliente_email: '',
         negocio_id: '',
-        fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        enviar_email: true  // Nueva opción para enviar email o no
     });
 
     const filterCodigos = useCallback(() => {
@@ -129,17 +130,37 @@ const Codigos = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(''); // Limpiar errores previos
         try {
-            await axiosClient.post('/codigos', formData);
+            console.log('Enviando datos:', formData);
+            const response = await axiosClient.post('/codigos', formData);
+            console.log('Respuesta exitosa:', response.data);
             setOpenDialog(false);
             cargarCodigos();
             setFormData({
                 cliente_email: '',
                 negocio_id: '',
-                fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                fecha_expiracion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                enviar_email: true
             });
         } catch (error) {
-            setError('Error al crear el código');
+            console.error('Error al crear código:', error);
+            let errorMessage = 'Error al crear el código';
+            
+            // Mostrar mensaje de error detallado del servidor si está disponible
+            if (error.response?.data?.details) {
+                if (error.response.data.details.includes('emailService.enviarCodigoDescuento is not a function')) {
+                    errorMessage = 'Error en el servicio de correo. El código no pudo ser enviado por email.';
+                } else {
+                    errorMessage += `: ${error.response.data.details}`;
+                }
+            } else if (error.response?.data?.message) {
+                errorMessage += `: ${error.response.data.message}`;
+            } else if (error.response?.data?.error) {
+                errorMessage += `: ${error.response.data.error}`;
+            }
+            
+            setError(errorMessage);
         }
     };
 
@@ -342,6 +363,29 @@ const Codigos = () => {
                             }}
                             renderInput={(params) => <TextField {...params} fullWidth margin="normal" />}
                         />
+                        <TextField
+                            fullWidth
+                            select
+                            label="Enviar notificación por email"
+                            name="enviar_email"
+                            value={formData.enviar_email.toString()}
+                            onChange={(e) => {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    enviar_email: e.target.value === 'true'
+                                }));
+                            }}
+                            margin="normal"
+                            helperText="Si está experimentando errores con el envío de emails, seleccione 'No'"
+                        >
+                            <MenuItem value="true">Sí</MenuItem>
+                            <MenuItem value="false">No</MenuItem>
+                        </TextField>
+                        {error && (
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions>
@@ -372,4 +416,4 @@ const Codigos = () => {
     );
 };
 
-export default Codigos; 
+export default Codigos;
