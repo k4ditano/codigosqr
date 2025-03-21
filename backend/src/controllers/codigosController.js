@@ -5,13 +5,19 @@ const emailService = require('../services/emailService');
 class CodigosController {
     async crear(req, res) {
         try {
+            console.log('Datos recibidos:', req.body);
             const { cliente_email, fecha_expiracion, negocio_id } = req.body;
+            const enviar_email = req.body.enviar_email === true || req.body.enviar_email === 'true';
+            
+            console.log('Enviar email:', enviar_email);
             
             // Generar código aleatorio
             const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
             
             // Generar QR
             const qrCode = await qrService.generateDiscountQR(codigo, negocio_id);
+            
+            console.log('Código QR generado correctamente');
             
             const result = await pool.query(
                 `INSERT INTO codigos_descuento (
@@ -25,17 +31,36 @@ class CodigosController {
                 [codigo, cliente_email, fecha_expiracion, negocio_id, qrCode]
             );
 
-            // Enviar email con el código
-            try {
-                await emailService.sendDiscountCode(cliente_email, codigo, qrCode);
-            } catch (emailError) {
-                console.error('Error al enviar email:', emailError);
+            console.log('Código insertado en la base de datos');
+
+            // Enviar email con el código solo si enviar_email es true
+            if (enviar_email) {
+                try {
+                    console.log('Intentando enviar email...');
+                    // Intentar con ambas funciones para garantizar compatibilidad
+                    try {
+                        await emailService.sendDiscountCode(cliente_email, codigo, qrCode);
+                    } catch (error) {
+                        console.log('Intentando con método alternativo...');
+                        await emailService.enviarCodigoDescuento(cliente_email, codigo, qrCode);
+                    }
+                    console.log('Email enviado correctamente');
+                } catch (emailError) {
+                    console.error('Error al enviar email:', emailError);
+                    // No retornamos error, simplemente continuamos
+                    console.log('Continuando a pesar del error de email');
+                }
+            } else {
+                console.log('Envío de email omitido según configuración');
             }
 
             res.status(201).json(result.rows[0]);
         } catch (error) {
             console.error('Error al crear código:', error);
-            res.status(500).json({ error: 'Error al crear el código de descuento' });
+            res.status(500).json({ 
+                error: 'Error al crear el código de descuento',
+                details: error.message
+            });
         }
     }
 
@@ -259,4 +284,4 @@ class CodigosController {
     }
 }
 
-module.exports = new CodigosController(); 
+module.exports = new CodigosController();

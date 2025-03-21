@@ -34,6 +34,11 @@ class EmailService {
         }
     }
 
+    // Agregar alias para compatibilidad con el nombre que está siendo llamado
+    async enviarCodigoDescuento(email, code, qrCode) {
+        return this.sendDiscountCode(email, code, qrCode);
+    }
+
     async sendBusinessCredentials(email, username, password) {
         try {
             await this.transporter.sendMail({
@@ -56,4 +61,4 @@ class EmailService {
     }
 }
 
-module.exports = new EmailService(); 
+module.exports = new EmailService();

@@ -131,9 +131,16 @@ const Codigos = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(''); // Limpiar errores previos
+        
+        // Asegurarse de que el valor de enviar_email es booleano
+        const dataToSend = {
+            ...formData,
+            enviar_email: formData.enviar_email === true || formData.enviar_email === 'true'
+        };
+        
         try {
-            console.log('Enviando datos:', formData);
-            const response = await axiosClient.post('/codigos', formData);
+            console.log('Enviando datos:', dataToSend);
+            const response = await axiosClient.post('/codigos', dataToSend);
             console.log('Respuesta exitosa:', response.data);
             setOpenDialog(false);
             cargarCodigos();
@@ -149,8 +156,8 @@ const Codigos = () => {
             
             // Mostrar mensaje de error detallado del servidor si está disponible
             if (error.response?.data?.details) {
-                if (error.response.data.details.includes('emailService.enviarCodigoDescuento is not a function')) {
-                    errorMessage = 'Error en el servicio de correo. El código no pudo ser enviado por email.';
+                if (error.response.data.details.includes('emailService')) {
+                    errorMessage = 'Error en el servicio de correo. Intenta crear el código sin enviar email.';
                 } else {
                     errorMessage += `: ${error.response.data.details}`;
                 }
