@@ -21,6 +21,7 @@ import QrCodeIcon from '@mui/icons-material/QrCode';
 import EmailIcon from '@mui/icons-material/Email';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import MenuIcon from '@mui/icons-material/Menu';
+import PeopleIcon from '@mui/icons-material/People';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,6 +52,11 @@ const menuItems = [
         text: 'Facturación',
         icon: <ReceiptIcon />,
         path: '/admin/facturacion'
+    },
+    {
+        text: 'Usuarios',
+        icon: <PeopleIcon />,
+        path: '/admin/usuarios'
     }
 ];
 

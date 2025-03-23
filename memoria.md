@@ -684,6 +684,104 @@ Se han implementado mejoras significativas en la responsividad de los componente
 - Mejora en la visualización de estados y chips
 - Optimización del buscador para diferentes dispositivos
 
+## Configuración de Despliegue en VPS
+
+### Estructura del Despliegue
+```plaintext
+VPS (145.223.100.119)
+├── Frontend: Puerto 80 (nginx)
+└── Backend: Puerto 5000 (Node.js/PM2)
+```
+
+### Configuración de Nginx
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name 145.223.100.119;
+
+    root /var/www/codigosqr/frontend/build;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://localhost:5000;  # ¡IMPORTANTE! El backend debe correr en puerto 5000
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # Headers CORS necesarios
+        add_header 'Access-Control-Allow-Origin' 'http://145.223.100.119' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+    }
+}
+```
+
+### Configuración del Backend
+1. **Puerto**: Debe estar configurado en puerto 5000
+```javascript
+// backend/src/index.js
+const PORT = process.env.PORT || 5000;
+```
+
+2. **CORS**: Configuración para permitir peticiones desde el dominio principal
+```javascript
+app.use(cors({
+    origin: ['http://145.223.100.119', 'http://145.223.100.119:80'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
+```
+
+### Configuración del Frontend
+1. **Variables de Entorno**: Usar `.env.production` para configuración de producción
+```env
+REACT_APP_API_URL=http://145.223.100.119/api
+```
+
+2. **Axios**: Configuración para usar la variable de entorno
+```javascript
+const axiosClient = axios.create({
+    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+```
+
+### Proceso de Despliegue
+1. Frontend:
+   ```bash
+   npm run build
+   # Copiar build a /var/www/codigosqr/frontend/build/
+   ```
+
+2. Backend:
+   ```bash
+   pm2 restart codigosqr-api
+   ```
+
+3. Nginx:
+   ```bash
+   sudo nginx -t
+   sudo systemctl restart nginx
+   ```
+
+### Solución de Problemas Comunes
+1. Error de CORS: Verificar configuración en nginx y backend
+2. Error de conexión a API: Asegurar que el puerto del backend (5000) coincide con nginx
+3. Errores 404: Verificar la configuración de try_files en nginx
+4. Problemas de build: Asegurar todas las dependencias instaladas (npm install)
+
 ### Componente Facturación
 - Implementación de vista responsive para la tabla de facturas
 - Adaptación del diálogo de detalles para pantallas pequeñas

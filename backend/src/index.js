@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/formularios');
 const facturacionRoutes = require('./routes/facturacion');
 const reportesRoutes = require('./routes/reportes');
+const usuariosRoutes = require('./routes/usuarios');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/formularios', formRoutes);
 app.use('/api/facturacion', facturacionRoutes);
 app.use('/api/reportes', reportesRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 const PORT = process.env.PORT || 5000;
 
