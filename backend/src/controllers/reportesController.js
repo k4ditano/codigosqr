@@ -29,7 +29,7 @@ class ReportesController {
             const negociosResult = await client.query(`
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN activo = true THEN 1 ELSE 0 END) as activos
+                    SUM(CASE WHEN estado = true THEN 1 ELSE 0 END) as activos
                 FROM negocios
             `);
 
@@ -64,10 +64,10 @@ class ReportesController {
 
             // Códigos canjeados por día
             const codigosCanjeadosResult = await client.query(`
-                SELECT DATE(fecha_canje) as fecha, COUNT(*) as cantidad
-                FROM codigos
-                WHERE fecha_canje BETWEEN $1 AND $2
-                GROUP BY DATE(fecha_canje)
+                SELECT DATE(cj.created_at) as fecha, COUNT(*) as cantidad
+                FROM canjes cj
+                WHERE cj.created_at BETWEEN $1 AND $2
+                GROUP BY DATE(cj.created_at)
                 ORDER BY fecha
             `, [fechaInicio, fechaFin]);
 
