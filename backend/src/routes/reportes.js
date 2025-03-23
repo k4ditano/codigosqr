@@ -4,17 +4,17 @@ const reportesController = require('../controllers/reportesController');
 const auth = require('../middleware/auth');
 const checkRole = require('../middleware/checkRole');
 
-// Todas las rutas requieren autenticación y rol de admin
-router.use(auth);
-router.use(checkRole(['admin']));
+// Middleware de autenticación y rol para todas las rutas
+const authAdmin = [auth, checkRole(['admin'])];
+
 
 // Obtener estadísticas generales
-router.get('/stats', reportesController.getStats.bind(reportesController));
+router.get('/stats', authAdmin, reportesController.getStats.bind(reportesController));
 
 // Obtener reporte por período
-router.get('/periodo', reportesController.getReportePeriodo.bind(reportesController));
+router.get('/periodo', authAdmin, reportesController.getReportePeriodo.bind(reportesController));
 
 // Descargar reporte en Excel
-router.get('/descargar', reportesController.descargarReporte.bind(reportesController));
+router.get('/descargar', authAdmin, reportesController.descargarReporte.bind(reportesController));
 
 module.exports = router;
