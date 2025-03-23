@@ -1,13 +1,41 @@
 # Resumen del Proyecto - Sistema de Descuentos
 
-## Últimos Cambios Realizados
+## Últimos Cambios Realizados (23/03/2025)
+
+### 1. Módulo de Gestión de Usuarios
+
+#### Funcionalidades Implementadas
+
+- Listado de usuarios con información detallada
+- Edición de datos de usuario
+- Activación/desactivación de cuentas
+- Reset de contraseñas
+
+#### Aspectos Técnicos
+
+- Nuevo controlador `usuariosController.js`
+- Rutas protegidas con middleware de autenticación y rol
+- Interfaz con Material-UI y validación de formularios
+- Utilidades para formato de fechas
+
+### 2. Módulo de Reportes
+
+#### Mejoras Implementadas
+
+- Corrección de consultas SQL para estadísticas
+- Integración con tabla de canjes
+- Optimización de conteo de registros activos
+
+## Historial de Cambios Anteriores
 
 ### 1. Corrección de Errores
+
 - Se corrigió el error 404 en la ruta `/negocios/:id`
 - Se implementó mejor manejo de errores en la creación de negocios
 - Se agregó logging detallado para depuración
 
 ### 2. Mejoras en el Controlador de Negocios
+
 ```javascript
 // Mejoras en negociosController.js
 async crear(req, res) {
@@ -42,6 +70,7 @@ async crear(req, res) {
 ```
 
 ### 3. Estructura de Base de Datos
+
 ```sql
 CREATE TABLE negocios (
     id SERIAL PRIMARY KEY,

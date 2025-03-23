@@ -684,6 +684,76 @@ Se han implementado mejoras significativas en la responsividad de los componente
 - Mejora en la visualización de estados y chips
 - Optimización del buscador para diferentes dispositivos
 
+## Implementación de Módulos de Reportes y Usuarios (23/03/2025)
+
+### 1. Módulo de Reportes
+
+#### Correcciones en Consultas SQL
+
+```sql
+-- Estadísticas de códigos
+SELECT 
+    COUNT(DISTINCT c.id) as total,
+    SUM(CASE WHEN c.estado = true AND c.fecha_fin >= CURRENT_DATE THEN 1 ELSE 0 END) as activos,
+    COUNT(DISTINCT cj.id) as canjeados
+FROM codigos c
+LEFT JOIN canjes cj ON c.id = cj.codigo_id;
+
+-- Estadísticas de negocios
+SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN estado = true THEN 1 ELSE 0 END) as activos
+FROM negocios;
+```
+
+#### Estructura de Datos
+
+- Tabla `codigos`: estado (boolean), fecha_fin para validez
+- Tabla `canjes`: registro de códigos canjeados
+- Tabla `negocios`: estado (boolean) para activo/inactivo
+
+### 2. Módulo de Gestión de Usuarios
+
+#### Backend (usuariosController.js)
+
+```javascript
+// Listar usuarios
+const result = await client.query(`
+    SELECT 
+        n.id,
+        n.nombre,
+        n.email,
+        n.email_asociado,
+        n.telefono,
+        n.estado,
+        n.role,
+        to_char(n.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as fecha_registro
+    FROM negocios n
+    ORDER BY n.created_at DESC
+`);
+```
+
+#### Frontend (Usuarios.js)
+
+- Tabla de usuarios con Material-UI
+- Acciones: editar, activar/desactivar, resetear contraseña
+- Utilidades para formato de fechas (helpers.js)
+
+#### Rutas y Middleware
+
+```javascript
+// Backend routes/usuarios.js
+router.get('/', authMiddleware, adminMiddleware, usuariosController.listar);
+router.put('/:id', authMiddleware, adminMiddleware, usuariosController.actualizar);
+router.patch('/:id/estado', authMiddleware, adminMiddleware, usuariosController.cambiarEstado);
+router.post('/:id/resetear-password', authMiddleware, adminMiddleware, usuariosController.resetearPassword);
+```
+
+### URLs y Acceso
+
+- Panel de reportes: /admin/reportes
+- Gestión de usuarios: /admin/usuarios
+
 ## Configuración de Despliegue en VPS
 
 ### Estructura del Despliegue
