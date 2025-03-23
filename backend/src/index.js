@@ -8,6 +8,7 @@ const codigosRoutes = require('./routes/codigos');
 const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/formularios');
 const facturacionRoutes = require('./routes/facturacion');
+const reportesRoutes = require('./routes/reportes');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/codigos', codigosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/formularios', formRoutes);
 app.use('/api/facturacion', facturacionRoutes);
+app.use('/api/reportes', reportesRoutes);
 
 const PORT = process.env.PORT || 5000;
 
