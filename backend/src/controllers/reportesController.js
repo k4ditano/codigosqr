@@ -20,7 +20,7 @@ class ReportesController {
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN estado = true AND fecha_fin >= CURRENT_DATE THEN 1 ELSE 0 END) as activos,
-                    SUM(CASE WHEN canjeado = true THEN 1 ELSE 0 END) as canjeados
+                    SUM(CASE WHEN estado_canje = true THEN 1 ELSE 0 END) as canjeados
                 FROM codigos
             `);
 
