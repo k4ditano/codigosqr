@@ -15,6 +15,7 @@ import Negocios from './components/admin/Negocios';
 import Codigos from './components/admin/Codigos';
 import Formularios from './components/admin/Formularios';
 import AdminFacturacion from './components/admin/Facturacion';
+import Reportes from './components/admin/Reportes';
 
 // Business components
 import BusinessLayout from './layouts/BusinessLayout';
@@ -83,6 +84,13 @@ const App = () => {
                                 <PrivateRoute>
                                     <AdminLayout>
                                         <AdminFacturacion />
+                                    </AdminLayout>
+                                </PrivateRoute>
+                            } />
+                            <Route path="/admin/reportes" element={
+                                <PrivateRoute>
+                                    <AdminLayout>
+                                        <Reportes />
                                     </AdminLayout>
                                 </PrivateRoute>
                             } />
