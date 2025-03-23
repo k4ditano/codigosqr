@@ -18,10 +18,11 @@ class ReportesController {
             // Total códigos y activos
             const codigosResult = await client.query(`
                 SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN estado = true AND fecha_fin >= CURRENT_DATE THEN 1 ELSE 0 END) as activos,
-                    SUM(CASE WHEN estado_canje = true THEN 1 ELSE 0 END) as canjeados
-                FROM codigos
+                    COUNT(DISTINCT c.id) as total,
+                    SUM(CASE WHEN c.estado = true AND c.fecha_fin >= CURRENT_DATE THEN 1 ELSE 0 END) as activos,
+                    COUNT(DISTINCT cj.id) as canjeados
+                FROM codigos c
+                LEFT JOIN canjes cj ON c.id = cj.codigo_id
             `);
 
             // Total negocios y activos
