@@ -50,10 +50,10 @@ const Reportes = () => {
             setLoading(true);
             setError(null);
             
-            const response = await axiosClient.get('/api/reportes/stats');
+            const response = await axiosClient.get('/reportes/stats');
             setStats(response.data);
             
-            const reporteResponse = await axiosClient.get('/api/reportes/periodo', {
+            const reporteResponse = await axiosClient.get('/reportes/periodo', {
                 params: {
                     fechaInicio: fechaInicio.toISOString(),
                     fechaFin: fechaFin.toISOString()
@@ -74,7 +74,7 @@ const Reportes = () => {
 
     const handleDescargarReporte = async () => {
         try {
-            const response = await axiosClient.get('/api/reportes/descargar', {
+            const response = await axiosClient.get('/reportes/descargar', {
                 params: {
                     fechaInicio: fechaInicio.toISOString(),
                     fechaFin: fechaFin.toISOString()
