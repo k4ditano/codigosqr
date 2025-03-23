@@ -13,10 +13,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://145.223.100.119',  // Permitir solo la IP del VPS
+    origin: ['http://145.223.100.119', 'http://145.223.100.119:80'],  // Permitir la IP del VPS con y sin puerto 80
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: true,
+    optionsSuccessStatus: 200 // Para compatibilidad con algunos navegadores
 }));
 app.use(express.json());
 
