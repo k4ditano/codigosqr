@@ -10,7 +10,7 @@ class FormulariosController {
             password: process.env.DB_PASSWORD,
             port: process.env.DB_PORT,
         });
-        this.emailService = new EmailService();
+        this.emailService = EmailService;
     }
 
     async crear(req, res) {
